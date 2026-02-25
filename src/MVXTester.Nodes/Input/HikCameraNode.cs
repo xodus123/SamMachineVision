@@ -265,17 +265,25 @@ public class HikCameraNode : BaseNode, IStreamingSource
     {
         if (_camera == null) return;
         var camType = _camera.GetType();
-        _setFloatValue = camType.GetMethod("MV_CC_SetFloatValue_NET");
-        _setEnumValue = camType.GetMethod("MV_CC_SetEnumValue_NET");
-        _setIntValueEx = camType.GetMethod("MV_CC_SetIntValueEx_NET");
-        _setCommandValue = camType.GetMethod("MV_CC_SetCommandValue_NET");
-        _getImageBuffer = camType.GetMethod("MV_CC_GetImageBuffer_NET");
-        _freeImageBuffer = camType.GetMethod("MV_CC_FreeImageBuffer_NET");
-        _startGrabbing = camType.GetMethod("MV_CC_StartGrabbing_NET");
-        _stopGrabbing = camType.GetMethod("MV_CC_StopGrabbing_NET");
-        _closeDevice = camType.GetMethod("MV_CC_CloseDevice_NET");
-        _destroyDevice = camType.GetMethod("MV_CC_DestroyDevice_NET");
-        _getOptimalPacketSize = camType.GetMethod("MV_CC_GetOptimalPacketSize_NET");
+
+        // Use GetMethods + filter to avoid AmbiguousMatchException on overloaded methods
+        MethodInfo? FindMethod(string name, int paramCount)
+        {
+            return camType.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .FirstOrDefault(m => m.Name == name && m.GetParameters().Length == paramCount);
+        }
+
+        _setFloatValue = FindMethod("MV_CC_SetFloatValue_NET", 2);         // (string, float)
+        _setEnumValue = FindMethod("MV_CC_SetEnumValue_NET", 2);           // (string, uint)
+        _setIntValueEx = FindMethod("MV_CC_SetIntValueEx_NET", 2);         // (string, long)
+        _setCommandValue = FindMethod("MV_CC_SetCommandValue_NET", 1);     // (string)
+        _getImageBuffer = FindMethod("MV_CC_GetImageBuffer_NET", 2);       // (ref MV_FRAME_OUT, int)
+        _freeImageBuffer = FindMethod("MV_CC_FreeImageBuffer_NET", 1);     // (ref MV_FRAME_OUT)
+        _startGrabbing = FindMethod("MV_CC_StartGrabbing_NET", 0);         // ()
+        _stopGrabbing = FindMethod("MV_CC_StopGrabbing_NET", 0);           // ()
+        _closeDevice = FindMethod("MV_CC_CloseDevice_NET", 0);             // ()
+        _destroyDevice = FindMethod("MV_CC_DestroyDevice_NET", 0);         // ()
+        _getOptimalPacketSize = FindMethod("MV_CC_GetOptimalPacketSize_NET", 0); // ()
     }
 
     private void OpenCamera(int deviceIndex)
@@ -302,8 +310,8 @@ public class HikCameraNode : BaseNode, IStreamingSource
             if (gigeField != null && usbField != null)
                 deviceFlags = (uint)(int)gigeField.GetValue(null)! | (uint)(int)usbField.GetValue(null)!;
 
-            var enumMethod = _myCameraType.GetMethod("MV_CC_EnumDevices_NET",
-                BindingFlags.Static | BindingFlags.Public);
+            var enumMethod = _myCameraType.GetMethods(BindingFlags.Static | BindingFlags.Public)
+                .FirstOrDefault(m => m.Name == "MV_CC_EnumDevices_NET" && m.GetParameters().Length == 2);
             if (enumMethod == null) { Error = "EnumDevices method not found"; return; }
 
             // Call with ref: args array captures modified ref value
@@ -339,8 +347,10 @@ public class HikCameraNode : BaseNode, IStreamingSource
             if (_camera == null) { Error = "Failed to create camera"; return; }
             CacheMethodReferences();
 
-            // Create device (ref parameter)
-            var createMethod = _camera.GetType().GetMethod("MV_CC_CreateDevice_NET");
+            // Create device (ref parameter) - use param count to avoid ambiguous match
+            var camType = _camera.GetType();
+            var createMethod = camType.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .FirstOrDefault(m => m.Name == "MV_CC_CreateDevice_NET" && m.GetParameters().Length == 1);
             if (createMethod != null)
             {
                 var createArgs = new object[] { deviceInfo };
@@ -348,14 +358,15 @@ public class HikCameraNode : BaseNode, IStreamingSource
                 if (ret != _mvOk) { Error = $"CreateDevice failed: 0x{ret:X8}"; _camera = null; return; }
             }
 
-            // Open device
-            var openMethod = _camera.GetType().GetMethod("MV_CC_OpenDevice_NET");
+            // Open device - parameterless overload
+            var openMethod = camType.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .FirstOrDefault(m => m.Name == "MV_CC_OpenDevice_NET" && m.GetParameters().Length == 0);
             if (openMethod != null)
             {
                 ret = (int)(openMethod.Invoke(_camera, null) ?? -1);
                 if (ret != _mvOk)
                 {
-                    Error = $"OpenDevice failed: 0x{ret:X8}";
+                    Error = $"Open camera failed: 0x{ret:X8}";
                     _destroyDevice?.Invoke(_camera, null);
                     _camera = null;
                     return;
