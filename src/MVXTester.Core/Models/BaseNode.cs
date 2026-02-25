@@ -107,7 +107,9 @@ public abstract class BaseNode : INode
 
     protected void SetPreview(Mat? mat)
     {
-        PreviewMat?.Dispose();
+        // Swap pattern: set new value first, then dispose old
+        // to avoid AccessViolationException when UI thread reads PreviewMat
+        var old = PreviewMat;
         if (mat != null && !mat.Empty())
         {
             PreviewMat = mat.Clone();
@@ -116,6 +118,7 @@ public abstract class BaseNode : INode
         {
             PreviewMat = null;
         }
+        try { old?.Dispose(); } catch { }
     }
 
     protected T? GetInputValue<T>(InputPort<T> port)

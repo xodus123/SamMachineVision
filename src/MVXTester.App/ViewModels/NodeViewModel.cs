@@ -47,20 +47,24 @@ public partial class NodeViewModel : ObservableObject
     {
         ErrorMessage = Model.Error;
 
-        var mat = Model.PreviewMat;
-        if (mat != null && !mat.IsDisposed && !mat.Empty())
+        try
         {
-            try
+            var mat = Model.PreviewMat;
+            if (mat != null && !mat.IsDisposed && !mat.Empty())
             {
-                var preview = new Mat();
-                var scale = Math.Min(160.0 / mat.Width, 120.0 / mat.Height);
+                // Clone to avoid race condition with streaming thread
+                using var snapshot = mat.Clone();
+
+                Mat preview;
+                var scale = Math.Min(160.0 / snapshot.Width, 120.0 / snapshot.Height);
                 if (scale < 1.0)
                 {
-                    Cv2.Resize(mat, preview, new OpenCvSharp.Size(0, 0), scale, scale);
+                    preview = new Mat();
+                    Cv2.Resize(snapshot, preview, new OpenCvSharp.Size(0, 0), scale, scale);
                 }
                 else
                 {
-                    preview = mat.Clone();
+                    preview = snapshot.Clone();
                 }
 
                 if (preview.Channels() == 1)
@@ -74,12 +78,12 @@ public partial class NodeViewModel : ObservableObject
                 PreviewImage = preview.ToWriteableBitmap();
                 preview.Dispose();
             }
-            catch
+            else
             {
                 PreviewImage = null;
             }
         }
-        else
+        catch
         {
             PreviewImage = null;
         }

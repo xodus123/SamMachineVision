@@ -160,14 +160,22 @@ public partial class PropertyEditorViewModel : ObservableObject
             var mat = SelectedNode.Model.PreviewMat;
             if (mat != null && !mat.IsDisposed && !mat.Empty())
             {
-                var display = new Mat();
+                // Clone immediately to avoid race condition with streaming thread
+                using var snapshot = mat.Clone();
+
+                Mat display;
                 var maxW = 240.0;
                 var maxH = 240.0;
-                var scale = Math.Min(maxW / mat.Width, maxH / mat.Height);
+                var scale = Math.Min(maxW / snapshot.Width, maxH / snapshot.Height);
                 if (scale < 1.0)
-                    Cv2.Resize(mat, display, new OpenCvSharp.Size(0, 0), scale, scale);
+                {
+                    display = new Mat();
+                    Cv2.Resize(snapshot, display, new OpenCvSharp.Size(0, 0), scale, scale);
+                }
                 else
-                    display = mat.Clone();
+                {
+                    display = snapshot.Clone();
+                }
 
                 if (display.Channels() == 1)
                 {
@@ -178,7 +186,7 @@ public partial class PropertyEditorViewModel : ObservableObject
                 }
 
                 ResultImage = display.ToWriteableBitmap();
-                ResultImageInfo = $"{mat.Width} x {mat.Height}  |  {mat.Channels()}ch  |  {mat.Type()}";
+                ResultImageInfo = $"{snapshot.Width} x {snapshot.Height}  |  {snapshot.Channels()}ch  |  {snapshot.Type()}";
                 display.Dispose();
             }
             else
@@ -187,7 +195,7 @@ public partial class PropertyEditorViewModel : ObservableObject
                 ResultImageInfo = "";
             }
         }
-        catch (ObjectDisposedException)
+        catch
         {
             ResultImage = null;
             ResultImageInfo = "";
