@@ -21,7 +21,7 @@ public partial class ExecuteOutputViewModel : ObservableObject
 
     public void UpdateImage(Mat? mat)
     {
-        if (mat == null || mat.Empty())
+        if (mat == null || mat.IsDisposed || mat.Empty())
         {
             OutputImage = null;
             return;

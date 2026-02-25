@@ -155,10 +155,10 @@ public partial class PropertyEditorViewModel : ObservableObject
             return;
         }
 
-        var mat = SelectedNode.Model.PreviewMat;
-        if (mat != null && !mat.Empty())
+        try
         {
-            try
+            var mat = SelectedNode.Model.PreviewMat;
+            if (mat != null && !mat.IsDisposed && !mat.Empty())
             {
                 var display = new Mat();
                 var maxW = 240.0;
@@ -181,13 +181,13 @@ public partial class PropertyEditorViewModel : ObservableObject
                 ResultImageInfo = $"{mat.Width} x {mat.Height}  |  {mat.Channels()}ch  |  {mat.Type()}";
                 display.Dispose();
             }
-            catch
+            else
             {
                 ResultImage = null;
                 ResultImageInfo = "";
             }
         }
-        else
+        catch (ObjectDisposedException)
         {
             ResultImage = null;
             ResultImageInfo = "";

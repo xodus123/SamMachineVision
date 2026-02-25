@@ -48,7 +48,7 @@ public partial class NodeViewModel : ObservableObject
         ErrorMessage = Model.Error;
 
         var mat = Model.PreviewMat;
-        if (mat != null && !mat.Empty())
+        if (mat != null && !mat.IsDisposed && !mat.Empty())
         {
             try
             {

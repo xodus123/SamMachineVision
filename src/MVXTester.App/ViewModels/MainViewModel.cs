@@ -154,7 +154,7 @@ public partial class MainViewModel : ObservableObject
     {
         // Find the last node with a preview image (prefer ImageShow nodes)
         var showNode = Editor.Nodes
-            .Where(n => n.Model.PreviewMat != null && !n.Model.PreviewMat.Empty())
+            .Where(n => n.Model.PreviewMat != null && !n.Model.PreviewMat.IsDisposed && !n.Model.PreviewMat.Empty())
             .LastOrDefault();
 
         if (showNode != null)
