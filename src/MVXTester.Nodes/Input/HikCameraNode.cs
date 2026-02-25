@@ -13,6 +13,15 @@ public enum HikTriggerMode
     Hardware
 }
 
+public enum HikPixelFormat
+{
+    Mono8,
+    BayerRG8,
+    RGB8,
+    BGR8,
+    YUV422_8
+}
+
 /// <summary>
 /// HIK Camera node using dynamic assembly loading to avoid startup crash
 /// when MvCameraControl.Net.dll (.NET Framework 4.x) is referenced from .NET 8.
@@ -28,6 +37,13 @@ public class HikCameraNode : BaseNode, IStreamingSource
     private NodeProperty _gain = null!;
     private NodeProperty _width = null!;
     private NodeProperty _height = null!;
+    private NodeProperty _pixelFormat = null!;
+    private NodeProperty _gamma = null!;
+    private NodeProperty _gammaEnable = null!;
+    private NodeProperty _autoExposure = null!;
+    private NodeProperty _autoGain = null!;
+    private NodeProperty _reverseX = null!;
+    private NodeProperty _reverseY = null!;
 
     private object? _camera; // MyCamera instance
     private Type? _myCameraType;
@@ -35,12 +51,14 @@ public class HikCameraNode : BaseNode, IStreamingSource
     private bool _isOpen;
     private int _lastDeviceIndex = -1;
     private int _lastTriggerValue;
+    private HikPixelFormat _lastPixelFormat = HikPixelFormat.Mono8;
 
     // Cached method references
     private MethodInfo? _setFloatValue;
     private MethodInfo? _setEnumValue;
     private MethodInfo? _setIntValueEx;
     private MethodInfo? _setCommandValue;
+    private MethodInfo? _setBoolValue;
     private MethodInfo? _getImageBuffer;
     private MethodInfo? _freeImageBuffer;
     private MethodInfo? _startGrabbing;
@@ -71,6 +89,13 @@ public class HikCameraNode : BaseNode, IStreamingSource
         _gain = AddDoubleProperty("Gain", "Gain (dB)", 0.0, 0.0, 20.0, "Analog gain in dB");
         _width = AddIntProperty("Width", "Width", 0, 0, 10000, "Image width (0 = max)");
         _height = AddIntProperty("Height", "Height", 0, 0, 10000, "Image height (0 = max)");
+        _pixelFormat = AddEnumProperty("PixelFormat", "Pixel Format", HikPixelFormat.Mono8, "Camera pixel format");
+        _gammaEnable = AddBoolProperty("GammaEnable", "Gamma Enable", false, "Enable gamma correction");
+        _gamma = AddDoubleProperty("Gamma", "Gamma", 0.7, 0.1, 4.0, "Gamma value (0.1~4.0)");
+        _autoExposure = AddBoolProperty("AutoExposure", "Auto Exposure", false, "Enable auto exposure");
+        _autoGain = AddBoolProperty("AutoGain", "Auto Gain", false, "Enable auto gain");
+        _reverseX = AddBoolProperty("ReverseX", "Reverse X", false, "Flip image horizontally");
+        _reverseY = AddBoolProperty("ReverseY", "Reverse Y", false, "Flip image vertically");
     }
 
     public override void Process()
@@ -78,24 +103,53 @@ public class HikCameraNode : BaseNode, IStreamingSource
         try
         {
             var deviceIndex = _deviceIndex.GetValue<int>();
+            var pixelFormat = _pixelFormat.GetValue<HikPixelFormat>();
 
-            if (!_isOpen || deviceIndex != _lastDeviceIndex)
+            if (!_isOpen || deviceIndex != _lastDeviceIndex || pixelFormat != _lastPixelFormat)
             {
                 CloseCamera();
                 OpenCamera(deviceIndex);
                 _lastDeviceIndex = deviceIndex;
+                _lastPixelFormat = pixelFormat;
             }
 
             if (!_isOpen || _camera == null)
                 return; // Error already set in OpenCamera
 
-            // Set exposure
-            var exposureTime = _exposureTime.GetValue<double>();
-            _setFloatValue?.Invoke(_camera, new object[] { "ExposureTime", (float)exposureTime });
+            // Auto exposure
+            var autoExposure = _autoExposure.GetValue<bool>();
+            _setEnumValue?.Invoke(_camera, new object[] { "ExposureAuto", autoExposure ? 2u : 0u });
 
-            // Set gain
-            var gain = _gain.GetValue<double>();
-            _setFloatValue?.Invoke(_camera, new object[] { "Gain", (float)gain });
+            // Set exposure (only when manual)
+            if (!autoExposure)
+            {
+                var exposureTime = _exposureTime.GetValue<double>();
+                _setFloatValue?.Invoke(_camera, new object[] { "ExposureTime", (float)exposureTime });
+            }
+
+            // Auto gain
+            var autoGain = _autoGain.GetValue<bool>();
+            _setEnumValue?.Invoke(_camera, new object[] { "GainAuto", autoGain ? 2u : 0u });
+
+            // Set gain (only when manual)
+            if (!autoGain)
+            {
+                var gain = _gain.GetValue<double>();
+                _setFloatValue?.Invoke(_camera, new object[] { "Gain", (float)gain });
+            }
+
+            // Gamma
+            var gammaEnable = _gammaEnable.GetValue<bool>();
+            _setBoolValue?.Invoke(_camera, new object[] { "GammaEnable", gammaEnable });
+            if (gammaEnable)
+            {
+                var gamma = _gamma.GetValue<double>();
+                _setFloatValue?.Invoke(_camera, new object[] { "Gamma", (float)gamma });
+            }
+
+            // Reverse
+            _setBoolValue?.Invoke(_camera, new object[] { "ReverseX", _reverseX.GetValue<bool>() });
+            _setBoolValue?.Invoke(_camera, new object[] { "ReverseY", _reverseY.GetValue<bool>() });
 
             // Software trigger
             var triggerMode = _triggerMode.GetValue<HikTriggerMode>();
@@ -278,6 +332,7 @@ public class HikCameraNode : BaseNode, IStreamingSource
         _setEnumValue = FindMethod("MV_CC_SetEnumValue_NET", 2);           // (string, uint)
         _setIntValueEx = FindMethod("MV_CC_SetIntValueEx_NET", 2);         // (string, long)
         _setCommandValue = FindMethod("MV_CC_SetCommandValue_NET", 1);     // (string)
+        _setBoolValue = FindMethod("MV_CC_SetBoolValue_NET", 2);           // (string, bool)
         _getImageBuffer = FindMethod("MV_CC_GetImageBuffer_NET", 2);       // (ref MV_FRAME_OUT, int)
         _freeImageBuffer = FindMethod("MV_CC_FreeImageBuffer_NET", 1);     // (ref MV_FRAME_OUT)
         _startGrabbing = FindMethod("MV_CC_StartGrabbing_NET", 0);         // ()
@@ -404,9 +459,32 @@ public class HikCameraNode : BaseNode, IStreamingSource
             if (height > 0)
                 _setIntValueEx?.Invoke(_camera, new object[] { "Height", (long)height });
 
+            // Set pixel format (must be set before grabbing)
+            var pixelFormat = _pixelFormat.GetValue<HikPixelFormat>();
+            uint pixelFormatValue = pixelFormat switch
+            {
+                HikPixelFormat.Mono8 => 0x01080001,
+                HikPixelFormat.BayerRG8 => 0x01080009,
+                HikPixelFormat.RGB8 => 0x02180014,
+                HikPixelFormat.BGR8 => 0x02180015,
+                HikPixelFormat.YUV422_8 => 0x02100032,
+                _ => 0x01080001
+            };
+            _setEnumValue?.Invoke(_camera, new object[] { "PixelFormat", pixelFormatValue });
+
             // Set initial params
             _setFloatValue?.Invoke(_camera, new object[] { "ExposureTime", (float)_exposureTime.GetValue<double>() });
             _setFloatValue?.Invoke(_camera, new object[] { "Gain", (float)_gain.GetValue<double>() });
+
+            // Set reverse
+            _setBoolValue?.Invoke(_camera, new object[] { "ReverseX", _reverseX.GetValue<bool>() });
+            _setBoolValue?.Invoke(_camera, new object[] { "ReverseY", _reverseY.GetValue<bool>() });
+
+            // Set gamma
+            var gammaEnable = _gammaEnable.GetValue<bool>();
+            _setBoolValue?.Invoke(_camera, new object[] { "GammaEnable", gammaEnable });
+            if (gammaEnable)
+                _setFloatValue?.Invoke(_camera, new object[] { "Gamma", (float)_gamma.GetValue<double>() });
 
             // Start grabbing
             ret = (int)(_startGrabbing?.Invoke(_camera, null) ?? -1);
