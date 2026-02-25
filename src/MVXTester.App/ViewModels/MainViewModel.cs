@@ -410,7 +410,7 @@ public partial class MainViewModel : ObservableObject
             var code = PythonCodeGenerator.Generate(Editor.Graph);
             var preview = new Views.CodePreviewDialog(code, "Python")
             {
-                Owner = Application.Current.MainWindow
+                Owner = Application.Current?.MainWindow
             };
             preview.ShowDialog();
             StatusText = "Python code generated";
@@ -437,7 +437,7 @@ public partial class MainViewModel : ObservableObject
             var code = CSharpCodeGenerator.Generate(Editor.Graph);
             var preview = new Views.CodePreviewDialog(code, "C#")
             {
-                Owner = Application.Current.MainWindow
+                Owner = Application.Current?.MainWindow
             };
             preview.ShowDialog();
             StatusText = "C# code generated";

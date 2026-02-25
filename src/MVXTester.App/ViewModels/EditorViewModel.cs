@@ -474,7 +474,9 @@ public partial class EditorViewModel : ObservableObject
         if (pasteResult.DeferredConnections.Count > 0)
         {
             var deferredConns = pasteResult.DeferredConnections;
-            Application.Current.Dispatcher.BeginInvoke(
+            var app = Application.Current;
+            if (app == null) return;
+            app.Dispatcher.BeginInvoke(
                 System.Windows.Threading.DispatcherPriority.Loaded,
                 () =>
                 {
@@ -841,7 +843,13 @@ public partial class EditorViewModel : ObservableObject
                     // Skip UI update if previous one hasn't finished yet
                     if (Interlocked.CompareExchange(ref _uiUpdatePending, 1, 0) == 0)
                     {
-                        Application.Current.Dispatcher.BeginInvoke(() =>
+                        var app = Application.Current;
+                        if (app == null)
+                        {
+                            Interlocked.Exchange(ref _uiUpdatePending, 0);
+                            return;
+                        }
+                        app.Dispatcher.BeginInvoke(() =>
                         {
                             foreach (var nodeVm in Nodes)
                                 nodeVm.UpdatePreview();
