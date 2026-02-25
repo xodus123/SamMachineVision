@@ -194,6 +194,49 @@
                                     </TextBox.Style>
                                 </TextBox>
 
+                                <!-- DeviceList (radio buttons) -->
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding PropertyType}" Value="{x:Static core:PropertyType.DeviceList}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <ItemsControl ItemsSource="{Binding DeviceOptions}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type vm:DeviceOptionItem}">
+                                                <RadioButton Content="{Binding Name}"
+                                                             IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                             Foreground="{DynamicResource ForegroundBrush}"
+                                                             FontSize="11" Margin="0,2" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock Text="No devices found"
+                                               Foreground="{DynamicResource ForegroundDimBrush}"
+                                               FontSize="10" Margin="0,2"
+                                               FontStyle="Italic">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding DeviceOptions.Count}" Value="0">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <Button Content="&#x21BB; Refresh" FontSize="10"
+                                            Command="{Binding RefreshDevicesCommand}"
+                                            HorizontalAlignment="Left" Margin="0,4,0,0"
+                                            Padding="8,3" />
+                                </StackPanel>
+
                                 <!-- Description -->
                                 <TextBlock Text="{Binding Description}" FontSize="9"
                                            Foreground="{DynamicResource ForegroundDimBrush}"

@@ -11,6 +11,28 @@ using MVXTester.App.UndoRedo;
 
 namespace MVXTester.App.ViewModels;
 
+public partial class DeviceOptionItem : ObservableObject
+{
+    private readonly PropertyItem _parent;
+    public string Name { get; }
+    public int Index { get; }
+    [ObservableProperty] private bool _isSelected;
+
+    public DeviceOptionItem(string name, int index, PropertyItem parent, bool isSelected = false)
+    {
+        Name = name;
+        Index = index;
+        _parent = parent;
+        _isSelected = isSelected;
+    }
+
+    partial void OnIsSelectedChanged(bool value)
+    {
+        if (value)
+            _parent.SelectDevice(Index);
+    }
+}
+
 public partial class PropertyItem : ObservableObject
 {
     private readonly NodeProperty _property;
@@ -20,6 +42,7 @@ public partial class PropertyItem : ObservableObject
     private readonly string? _nodeId;
     private object? _previousValue;
     private bool _suppressUndo;
+    private readonly INode? _ownerNode;
 
     public string Name => _property.DisplayName;
     public string PropertyName => _property.Name;
@@ -30,17 +53,51 @@ public partial class PropertyItem : ObservableObject
     public Type? EnumType => _property.EnumType;
 
     [ObservableProperty] private object? _value;
+    [ObservableProperty] private ObservableCollection<DeviceOptionItem> _deviceOptions = new();
 
     public PropertyItem(NodeProperty property, Action onChanged,
-        UndoRedoManager? undoManager = null, EditorViewModel? editor = null, string? nodeId = null)
+        UndoRedoManager? undoManager = null, EditorViewModel? editor = null, string? nodeId = null,
+        INode? ownerNode = null)
     {
         _property = property;
         _onChanged = onChanged;
         _undoManager = undoManager;
         _editor = editor;
         _nodeId = nodeId;
+        _ownerNode = ownerNode;
         _value = property.Value;
         _previousValue = property.Value;
+
+        if (property.PropertyType == PropertyType.DeviceList)
+        {
+            RefreshDeviceOptions();
+            property.OptionsChanged += RefreshDeviceOptions;
+        }
+    }
+
+    private void RefreshDeviceOptions()
+    {
+        var currentValue = _property.GetValue<int>();
+        var items = new ObservableCollection<DeviceOptionItem>();
+        foreach (var opt in _property.DeviceOptions)
+            items.Add(new DeviceOptionItem(opt.Name, opt.Index, this, opt.Index == currentValue));
+        DeviceOptions = items;
+    }
+
+    public void SelectDevice(int deviceIndex)
+    {
+        Value = deviceIndex;
+        foreach (var opt in DeviceOptions)
+            opt.IsSelected = opt.Index == deviceIndex;
+    }
+
+    [RelayCommand]
+    private void RefreshDevices()
+    {
+        if (_ownerNode is MVXTester.Nodes.Input.UsbCameraNode usbNode)
+            usbNode.EnumerateDevices();
+        else if (_ownerNode is MVXTester.Nodes.Input.HikCameraNode hikNode)
+            hikNode.EnumerateDevices();
     }
 
     partial void OnValueChanged(object? value)
@@ -140,7 +197,7 @@ public partial class PropertyEditorViewModel : ObservableObject
         foreach (var prop in node.Model.Properties)
         {
             Properties.Add(new PropertyItem(prop, () => _onPropertyChanged?.Invoke(),
-                _undoManager, _editor, node.Model.Id));
+                _undoManager, _editor, node.Model.Id, node.Model));
         }
 
         UpdateResultImage();

@@ -106,6 +106,10 @@ public abstract class BaseNode : INode
         string? description = null)
         => AddProperty(name, displayName, PropertyType.MultilineString, typeof(string), defaultValue, description: description);
 
+    protected NodeProperty AddDeviceListProperty(string name, string displayName, int defaultValue = -1,
+        string? description = null)
+        => AddProperty(name, displayName, PropertyType.DeviceList, typeof(int), defaultValue, description: description);
+
     protected void SetPreview(Mat? mat)
     {
         lock (PreviewLock)

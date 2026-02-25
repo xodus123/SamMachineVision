@@ -116,7 +116,8 @@ public enum PropertyType
     Scalar,
     FilePath,
     Range,
-    MultilineString
+    MultilineString,
+    DeviceList
 }
 
 public class NodeProperty
@@ -131,6 +132,12 @@ public class NodeProperty
     public object? DefaultValue { get; }
     public string? Description { get; }
     public Type? EnumType { get; }
+
+    /// <summary>
+    /// Option list for DeviceList property type.
+    /// Each item: (DisplayName, DeviceIndex)
+    /// </summary>
+    public List<(string Name, int Index)> DeviceOptions { get; } = new();
 
     public NodeProperty(string name, string displayName, PropertyType propertyType, Type valueType,
         object? defaultValue = null, object? minValue = null, object? maxValue = null,
@@ -149,6 +156,7 @@ public class NodeProperty
     }
 
     public event Action? ValueChanged;
+    public event Action? OptionsChanged;
 
     public void SetValue(object? value)
     {
@@ -157,6 +165,13 @@ public class NodeProperty
             Value = value;
             ValueChanged?.Invoke();
         }
+    }
+
+    public void UpdateDeviceOptions(List<(string Name, int Index)> options)
+    {
+        DeviceOptions.Clear();
+        DeviceOptions.AddRange(options);
+        OptionsChanged?.Invoke();
     }
 
     public T GetValue<T>()

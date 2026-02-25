@@ -15,7 +15,7 @@ public enum UsbCameraBackend
 public class UsbCameraNode : BaseNode, IStreamingSource
 {
     private OutputPort<Mat> _frameOutput = null!;
-    private NodeProperty _cameraIndex = null!;
+    private NodeProperty _deviceList = null!;
     private NodeProperty _width = null!;
     private NodeProperty _height = null!;
     private NodeProperty _fps = null!;
@@ -29,18 +29,60 @@ public class UsbCameraNode : BaseNode, IStreamingSource
     protected override void Setup()
     {
         _frameOutput = AddOutput<Mat>("Frame");
-        _cameraIndex = AddIntProperty("CameraIndex", "Camera Index", 0, 0, 10, "Camera device index");
+        _deviceList = AddDeviceListProperty("DeviceList", "Camera", -1, "Select USB camera device");
         _width = AddIntProperty("Width", "Width", 640, 0, 4096, "Capture width (0=default)");
         _height = AddIntProperty("Height", "Height", 480, 0, 4096, "Capture height (0=default)");
         _fps = AddIntProperty("FPS", "FPS", 30, 1, 120, "Target frames per second");
         _backend = AddEnumProperty("Backend", "Backend", UsbCameraBackend.DirectShow, "Capture backend API");
+
+        EnumerateDevices();
+    }
+
+    public void EnumerateDevices()
+    {
+        var devices = new List<(string Name, int Index)>();
+        var backend = _backend.GetValue<UsbCameraBackend>();
+        var apiPref = backend switch
+        {
+            UsbCameraBackend.DirectShow => VideoCaptureAPIs.DSHOW,
+            UsbCameraBackend.MSMF => VideoCaptureAPIs.MSMF,
+            UsbCameraBackend.Auto => VideoCaptureAPIs.ANY,
+            _ => VideoCaptureAPIs.ANY
+        };
+
+        for (int i = 0; i < 10; i++)
+        {
+            try
+            {
+                using var cap = new VideoCapture(i, apiPref);
+                if (cap.IsOpened())
+                {
+                    var w = (int)cap.Get(VideoCaptureProperties.FrameWidth);
+                    var h = (int)cap.Get(VideoCaptureProperties.FrameHeight);
+                    devices.Add(($"Camera {i} ({w}x{h})", i));
+                }
+            }
+            catch { }
+        }
+
+        _deviceList.UpdateDeviceOptions(devices);
+
+        // Auto-select first device if none selected
+        if (devices.Count > 0 && _deviceList.GetValue<int>() < 0)
+            _deviceList.SetValue(devices[0].Index);
     }
 
     public override void Process()
     {
         try
         {
-            var cameraIndex = _cameraIndex.GetValue<int>();
+            var cameraIndex = _deviceList.GetValue<int>();
+            if (cameraIndex < 0)
+            {
+                Error = "No camera selected";
+                return;
+            }
+
             var width = _width.GetValue<int>();
             var height = _height.GetValue<int>();
             var fps = _fps.GetValue<int>();
@@ -61,7 +103,7 @@ public class UsbCameraNode : BaseNode, IStreamingSource
             {
                 SetOutputValue(_frameOutput, frame);
                 SetPreview(frame);
-                Error = $"{frame.Width}x{frame.Height} {frame.Channels()}ch";
+                Error = null;
             }
             else
             {
