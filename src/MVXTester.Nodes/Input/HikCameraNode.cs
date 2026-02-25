@@ -132,10 +132,11 @@ public class HikCameraNode : BaseNode, IStreamingSource
                     return;
                 }
 
-                uint w = (uint)(_frameInfo_nWidth?.GetValue(stFrameInfo) ?? 0u);
-                uint h = (uint)(_frameInfo_nHeight?.GetValue(stFrameInfo) ?? 0u);
-                uint frameLen = (uint)(_frameInfo_nFrameLen?.GetValue(stFrameInfo) ?? 0u);
-                IntPtr pBufAddr = (IntPtr)(_frameOut_pBufAddr?.GetValue(frameOut) ?? IntPtr.Zero);
+                uint w = Convert.ToUInt32(_frameInfo_nWidth?.GetValue(stFrameInfo) ?? 0);
+                uint h = Convert.ToUInt32(_frameInfo_nHeight?.GetValue(stFrameInfo) ?? 0);
+                uint frameLen = Convert.ToUInt32(_frameInfo_nFrameLen?.GetValue(stFrameInfo) ?? 0);
+                var pBufAddrObj = _frameOut_pBufAddr?.GetValue(frameOut);
+                IntPtr pBufAddr = pBufAddrObj is IntPtr ptr ? ptr : IntPtr.Zero;
 
                 if (w == 0 || h == 0 || pBufAddr == IntPtr.Zero)
                 {
@@ -308,7 +309,7 @@ public class HikCameraNode : BaseNode, IStreamingSource
             var usbField = _myCameraType.GetField("MV_USB_DEVICE", BindingFlags.Static | BindingFlags.Public);
             uint deviceFlags = 0x1 | 0x4; // defaults
             if (gigeField != null && usbField != null)
-                deviceFlags = (uint)(int)gigeField.GetValue(null)! | (uint)(int)usbField.GetValue(null)!;
+                deviceFlags = Convert.ToUInt32(gigeField.GetValue(null)) | Convert.ToUInt32(usbField.GetValue(null));
 
             var enumMethod = _myCameraType.GetMethods(BindingFlags.Static | BindingFlags.Public)
                 .FirstOrDefault(m => m.Name == "MV_CC_EnumDevices_NET" && m.GetParameters().Length == 2);
@@ -321,7 +322,7 @@ public class HikCameraNode : BaseNode, IStreamingSource
 
             if (ret != _mvOk) { Error = $"Enumerate failed: 0x{ret:X8}"; return; }
 
-            var nDeviceNum = (uint)(deviceListType.GetField("nDeviceNum")?.GetValue(deviceList) ?? 0u);
+            var nDeviceNum = Convert.ToUInt32(deviceListType.GetField("nDeviceNum")?.GetValue(deviceList) ?? 0);
             if (nDeviceNum == 0) { Error = "No HIK cameras found"; return; }
             if (deviceIndex >= (int)nDeviceNum)
             {
@@ -374,7 +375,7 @@ public class HikCameraNode : BaseNode, IStreamingSource
             }
 
             // Set optimal packet size for GigE
-            var nTLayerType = (uint)(deviceInfoType.GetField("nTLayerType")?.GetValue(deviceInfo) ?? 0u);
+            var nTLayerType = Convert.ToUInt32(deviceInfoType.GetField("nTLayerType")?.GetValue(deviceInfo) ?? 0);
             if (nTLayerType == 0x1 && _getOptimalPacketSize != null) // MV_GIGE_DEVICE
             {
                 int packetSize = (int)(_getOptimalPacketSize.Invoke(_camera, null) ?? 0);
