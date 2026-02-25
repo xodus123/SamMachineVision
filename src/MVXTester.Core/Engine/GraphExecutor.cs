@@ -13,7 +13,7 @@ public class GraphExecutor
         var order = TopologicalSort(graph.Nodes, graph.Connections);
         foreach (var node in order)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested) return;
 
             if (forceAll || node.IsDirty)
             {
@@ -22,10 +22,6 @@ public class GraphExecutor
                     node.Error = null;
                     node.Process();
                     node.IsDirty = false;
-                }
-                catch (OperationCanceledException)
-                {
-                    throw;
                 }
                 catch (Exception ex)
                 {

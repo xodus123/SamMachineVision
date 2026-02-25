@@ -235,50 +235,27 @@ public class HikCameraNode : BaseNode, IStreamingSource
                         break;
                     }
                     case PX_BAYER_RG8:
-                    {
-                        int size = iw * ih;
-                        byte[] data = new byte[size];
-                        Marshal.Copy(pBufAddr, data, 0, size);
-                        var bayer = new Mat(ih, iw, MatType.CV_8UC1);
-                        Marshal.Copy(data, 0, bayer.Data, size);
-                        frame = new Mat();
-                        Cv2.CvtColor(bayer, frame, ColorConversionCodes.BayerRG2BGR);
-                        bayer.Dispose();
-                        break;
-                    }
                     case PX_BAYER_BG8:
-                    {
-                        int size = iw * ih;
-                        byte[] data = new byte[size];
-                        Marshal.Copy(pBufAddr, data, 0, size);
-                        var bayer = new Mat(ih, iw, MatType.CV_8UC1);
-                        Marshal.Copy(data, 0, bayer.Data, size);
-                        frame = new Mat();
-                        Cv2.CvtColor(bayer, frame, ColorConversionCodes.BayerBG2BGR);
-                        bayer.Dispose();
-                        break;
-                    }
                     case PX_BAYER_GR8:
-                    {
-                        int size = iw * ih;
-                        byte[] data = new byte[size];
-                        Marshal.Copy(pBufAddr, data, 0, size);
-                        var bayer = new Mat(ih, iw, MatType.CV_8UC1);
-                        Marshal.Copy(data, 0, bayer.Data, size);
-                        frame = new Mat();
-                        Cv2.CvtColor(bayer, frame, ColorConversionCodes.BayerGR2BGR);
-                        bayer.Dispose();
-                        break;
-                    }
                     case PX_BAYER_GB8:
                     {
+                        // HIK SDK and OpenCV use different Bayer naming conventions,
+                        // so map HIK pattern names to the correct OpenCV conversion codes
                         int size = iw * ih;
                         byte[] data = new byte[size];
                         Marshal.Copy(pBufAddr, data, 0, size);
                         var bayer = new Mat(ih, iw, MatType.CV_8UC1);
                         Marshal.Copy(data, 0, bayer.Data, size);
                         frame = new Mat();
-                        Cv2.CvtColor(bayer, frame, ColorConversionCodes.BayerGB2BGR);
+                        var bayerCode = pxType switch
+                        {
+                            PX_BAYER_GR8 => ColorConversionCodes.BayerGB2BGR,
+                            PX_BAYER_RG8 => ColorConversionCodes.BayerBG2BGR,
+                            PX_BAYER_GB8 => ColorConversionCodes.BayerGR2BGR,
+                            PX_BAYER_BG8 => ColorConversionCodes.BayerRG2BGR,
+                            _ => ColorConversionCodes.BayerGB2BGR
+                        };
+                        Cv2.CvtColor(bayer, frame, bayerCode);
                         bayer.Dispose();
                         break;
                     }
