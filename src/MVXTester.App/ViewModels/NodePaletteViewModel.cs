@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -6,12 +7,29 @@ using MVXTester.Core.Registry;
 
 namespace MVXTester.App.ViewModels;
 
-public class NodeCategoryItem
+public class NodeCategoryItem : INotifyPropertyChanged
 {
     public string Name { get; init; } = "";
     public ObservableCollection<NodeRegistryEntry> Nodes { get; init; } = new();
-    public bool IsExpanded { get; set; }
     public SolidColorBrush CategoryColor => CategoryColorHelper.GetBrush(Name);
+
+    private bool _isExpanded;
+    public bool IsExpanded
+    {
+        get => _isExpanded;
+        set
+        {
+            if (_isExpanded == value) return;
+            _isExpanded = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
+            if (value)
+                Expanded?.Invoke(this);
+        }
+    }
+
+    /// <summary>Raised when this category is expanded (for accordion behavior).</summary>
+    public event Action<NodeCategoryItem>? Expanded;
+    public event PropertyChangedEventHandler? PropertyChanged;
 }
 
 public partial class NodePaletteViewModel : ObservableObject
@@ -36,6 +54,10 @@ public partial class NodePaletteViewModel : ObservableObject
 
     private void RefreshCategories()
     {
+        // Unsubscribe old items
+        foreach (var cat in Categories)
+            cat.Expanded -= OnCategoryExpanded;
+
         Categories.Clear();
         var entries = string.IsNullOrWhiteSpace(SearchText)
             ? _registry.GetByCategory()
@@ -45,12 +67,24 @@ public partial class NodePaletteViewModel : ObservableObject
 
         foreach (var kvp in entries)
         {
-            Categories.Add(new NodeCategoryItem
+            var item = new NodeCategoryItem
             {
                 Name = kvp.Key,
                 Nodes = new ObservableCollection<NodeRegistryEntry>(kvp.Value),
                 IsExpanded = !string.IsNullOrWhiteSpace(SearchText)
-            });
+            };
+            item.Expanded += OnCategoryExpanded;
+            Categories.Add(item);
+        }
+    }
+
+    /// <summary>Accordion: when one category opens, collapse all others.</summary>
+    private void OnCategoryExpanded(NodeCategoryItem expanded)
+    {
+        foreach (var cat in Categories)
+        {
+            if (cat != expanded && cat.IsExpanded)
+                cat.IsExpanded = false;
         }
     }
 

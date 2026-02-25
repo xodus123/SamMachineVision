@@ -8,22 +8,24 @@ namespace MVXTester.Nodes.Segmentation;
 public class GrabCutNode : BaseNode
 {
     private InputPort<Mat> _imageInput = null!;
+    private OutputPort<Mat> _resultOutput = null!;
     private OutputPort<Mat> _maskOutput = null!;
-    private NodeProperty _x = null!;
-    private NodeProperty _y = null!;
-    private NodeProperty _width = null!;
-    private NodeProperty _height = null!;
+    private NodeProperty _rectX = null!;
+    private NodeProperty _rectY = null!;
+    private NodeProperty _rectW = null!;
+    private NodeProperty _rectH = null!;
     private NodeProperty _iterations = null!;
 
     protected override void Setup()
     {
         _imageInput = AddInput<Mat>("Image");
+        _resultOutput = AddOutput<Mat>("Result");
         _maskOutput = AddOutput<Mat>("Mask");
-        _x = AddIntProperty("X", "Rect X", 10, 0, 10000, "ROI X");
-        _y = AddIntProperty("Y", "Rect Y", 10, 0, 10000, "ROI Y");
-        _width = AddIntProperty("Width", "Rect Width", 100, 1, 10000, "ROI Width");
-        _height = AddIntProperty("Height", "Rect Height", 100, 1, 10000, "ROI Height");
-        _iterations = AddIntProperty("Iterations", "Iterations", 5, 1, 50, "Number of iterations");
+        _rectX = AddIntProperty("RectX", "Rect X", 10, 0, 10000, "ROI rectangle X position");
+        _rectY = AddIntProperty("RectY", "Rect Y", 10, 0, 10000, "ROI rectangle Y position");
+        _rectW = AddIntProperty("RectW", "Rect Width", 200, 1, 10000, "ROI rectangle width");
+        _rectH = AddIntProperty("RectH", "Rect Height", 200, 1, 10000, "ROI rectangle height");
+        _iterations = AddIntProperty("Iterations", "Iterations", 5, 1, 50, "Number of GrabCut iterations");
     }
 
     public override void Process()
@@ -44,10 +46,10 @@ public class GrabCutNode : BaseNode
             }
 
             var rect = new Rect(
-                _x.GetValue<int>(),
-                _y.GetValue<int>(),
-                _width.GetValue<int>(),
-                _height.GetValue<int>()
+                _rectX.GetValue<int>(),
+                _rectY.GetValue<int>(),
+                _rectW.GetValue<int>(),
+                _rectH.GetValue<int>()
             );
             var iterations = _iterations.GetValue<int>();
 
@@ -68,18 +70,23 @@ public class GrabCutNode : BaseNode
 
             // Create binary mask (foreground = 255)
             // GC_PR_FGD = 3, GC_FGD = 1
-            var resultMask = new Mat();
-            Cv2.Compare(mask, new Scalar(3), resultMask, CmpType.EQ);
-
             var fgMask = new Mat();
-            Cv2.Compare(mask, new Scalar(1), fgMask, CmpType.EQ);
-            Cv2.BitwiseOr(resultMask, fgMask, resultMask);
+            Cv2.Compare(mask, new Scalar(3), fgMask, CmpType.EQ);
+
+            var definiteFg = new Mat();
+            Cv2.Compare(mask, new Scalar(1), definiteFg, CmpType.EQ);
+            Cv2.BitwiseOr(fgMask, definiteFg, fgMask);
 
             mask.Dispose();
-            fgMask.Dispose();
+            definiteFg.Dispose();
 
-            SetOutputValue(_maskOutput, resultMask);
-            SetPreview(resultMask);
+            // Apply mask to image to get foreground result
+            var result = new Mat(image.Size(), image.Type(), Scalar.All(0));
+            image.CopyTo(result, fgMask);
+
+            SetOutputValue(_resultOutput, result);
+            SetOutputValue(_maskOutput, fgMask);
+            SetPreview(result);
             Error = null;
         }
         catch (Exception ex)
