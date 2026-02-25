@@ -140,6 +140,12 @@ public abstract class BaseNode : INode
 
     protected void SetOutputValue<T>(OutputPort<T> port, T? value)
     {
+        var old = port.TypedValue;
         port.TypedValue = value;
+        // Dispose previous output value to prevent memory leak during streaming
+        if (old is IDisposable disposable && !ReferenceEquals(old, value))
+        {
+            try { disposable.Dispose(); } catch { }
+        }
     }
 }

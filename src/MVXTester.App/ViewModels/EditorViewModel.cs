@@ -30,6 +30,7 @@ public partial class EditorViewModel : ObservableObject
     private bool _isExecuting;
     private bool _isStreaming;
     private CancellationTokenSource? _executionCts;
+    private int _uiUpdatePending;
     private bool _isSyncingSelection;
 
     public bool IsExecuting
@@ -832,14 +833,23 @@ public partial class EditorViewModel : ObservableObject
 
         try
         {
+            _uiUpdatePending = 0;
             await Task.Run(() => _executor.ExecuteContinuous(
                 _graph, _executionCts.Token,
-                onFrameComplete: () => Application.Current.Dispatcher.BeginInvoke(() =>
+                onFrameComplete: () =>
                 {
-                    foreach (var nodeVm in Nodes)
-                        nodeVm.UpdatePreview();
-                    GraphExecuted?.Invoke();
-                }),
+                    // Skip UI update if previous one hasn't finished yet
+                    if (Interlocked.CompareExchange(ref _uiUpdatePending, 1, 0) == 0)
+                    {
+                        Application.Current.Dispatcher.BeginInvoke(() =>
+                        {
+                            foreach (var nodeVm in Nodes)
+                                nodeVm.UpdatePreview();
+                            GraphExecuted?.Invoke();
+                            Interlocked.Exchange(ref _uiUpdatePending, 0);
+                        });
+                    }
+                },
                 targetFps: 30
             ));
         }
