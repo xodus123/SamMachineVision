@@ -83,7 +83,8 @@
                                                   IsConnected="{Binding IsConnected}"
                                                   Foreground="{DynamicResource ForegroundDimBrush}"
                                                   FontSize="10"
-                                                  BorderBrush="{Binding TypeColor}" />
+                                                  BorderBrush="{Binding TypeColor}"
+                                                  MouseDoubleClick="Connector_MouseDoubleClick" />
                             </DataTemplate>
                         </nodify:Node.InputConnectorTemplate>
 
@@ -94,7 +95,8 @@
                                                    IsConnected="{Binding IsConnected}"
                                                    Foreground="{DynamicResource ForegroundDimBrush}"
                                                    FontSize="10"
-                                                   BorderBrush="{Binding TypeColor}" />
+                                                   BorderBrush="{Binding TypeColor}"
+                                                   MouseDoubleClick="Connector_MouseDoubleClick" />
                             </DataTemplate>
                         </nodify:Node.OutputConnectorTemplate>
                     </nodify:Node>

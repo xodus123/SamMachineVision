@@ -62,4 +62,16 @@ public partial class EditorView : UserControl
             vm.SelectNode(nodeVm);
         }
     }
+
+    private void Connector_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is ConnectorViewModel connector)
+        {
+            if (DataContext is EditorViewModel vm)
+            {
+                vm.ConnectorDoubleClickCommand.Execute(connector);
+                e.Handled = true;
+            }
+        }
+    }
 }

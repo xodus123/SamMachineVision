@@ -606,7 +606,7 @@ public partial class EditorViewModel : ObservableObject
 
     // ===== Auto-connect by proximity =====
 
-    public const double ProximityThreshold = 50.0;
+    public const double ProximityThreshold = 20.0;
 
     public void AutoConnectByProximity(IEnumerable<NodeViewModel> movedNodes)
     {
