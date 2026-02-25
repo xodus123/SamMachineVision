@@ -19,6 +19,8 @@
   <ItemGroup>
     <Reference Include="MvCameraControl.Net">
       <HintPath>..\..\libs\MvCameraControl.Net.dll</HintPath>
+      <Private>true</Private>
+      <CopyLocal>true</CopyLocal>
     </Reference>
   </ItemGroup>
 
