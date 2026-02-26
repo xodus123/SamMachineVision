@@ -806,6 +806,13 @@ public partial class EditorViewModel : ObservableObject
         catch (OperationCanceledException) { }
         finally
         {
+            // Cleanup runtime resources (close OpenCV windows, stop cameras, etc.)
+            foreach (var nodeVm in Nodes)
+            {
+                if (nodeVm.Model is BaseNode baseNode)
+                    baseNode.Cleanup();
+            }
+
             IsExecuting = false;
             foreach (var nodeVm in Nodes)
                 nodeVm.UpdatePreview();
@@ -881,6 +888,13 @@ public partial class EditorViewModel : ObservableObject
         catch (OperationCanceledException) { }
         finally
         {
+            // Cleanup runtime resources (close OpenCV windows, stop cameras, etc.)
+            foreach (var nodeVm in Nodes)
+            {
+                if (nodeVm.Model is BaseNode baseNode)
+                    baseNode.Cleanup();
+            }
+
             IsExecuting = false;
             IsStreaming = false;
             foreach (var nodeVm in Nodes)
