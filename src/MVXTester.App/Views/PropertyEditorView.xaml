@@ -114,10 +114,9 @@
                                 </Grid>
 
                                 <!-- Boolean -->
-                                <CheckBox IsChecked="{Binding Value}" Content="{Binding Name}"
-                                          Foreground="{DynamicResource ForegroundBrush}" FontSize="11">
-                                    <CheckBox.Style>
-                                        <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+                                <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding PropertyType}" Value="{x:Static core:PropertyType.Boolean}">
@@ -125,13 +124,15 @@
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </CheckBox.Style>
-                                </CheckBox>
+                                    </Grid.Style>
+                                    <CheckBox IsChecked="{Binding Value}" Content="{Binding Name}"
+                                              Foreground="{DynamicResource ForegroundBrush}" FontSize="11" />
+                                </Grid>
 
                                 <!-- String -->
-                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" FontSize="11">
-                                    <TextBox.Style>
-                                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding PropertyType}" Value="{x:Static core:PropertyType.String}">
@@ -139,13 +140,14 @@
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </TextBox.Style>
-                                </TextBox>
+                                    </Grid.Style>
+                                    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" FontSize="11" />
+                                </Grid>
 
                                 <!-- Enum -->
-                                <ComboBox ItemsSource="{Binding EnumValues}" SelectedItem="{Binding Value}" FontSize="11">
-                                    <ComboBox.Style>
-                                        <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                                <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding PropertyType}" Value="{x:Static core:PropertyType.Enum}">
@@ -153,8 +155,9 @@
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </ComboBox.Style>
-                                </ComboBox>
+                                    </Grid.Style>
+                                    <ComboBox ItemsSource="{Binding EnumValues}" SelectedItem="{Binding Value}" FontSize="11" />
+                                </Grid>
 
                                 <!-- FilePath -->
                                 <Grid>
@@ -178,12 +181,9 @@
                                 </Grid>
 
                                 <!-- MultilineString -->
-                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
-                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" MaxHeight="150"
-                                         FontFamily="Consolas" FontSize="10"
-                                         VerticalScrollBarVisibility="Auto">
-                                    <TextBox.Style>
-                                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding PropertyType}" Value="{x:Static core:PropertyType.MultilineString}">
@@ -191,8 +191,12 @@
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </TextBox.Style>
-                                </TextBox>
+                                    </Grid.Style>
+                                    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" MaxHeight="150"
+                                             FontFamily="Consolas" FontSize="10"
+                                             VerticalScrollBarVisibility="Auto" />
+                                </Grid>
 
                                 <!-- DeviceList (radio buttons) -->
                                 <StackPanel>

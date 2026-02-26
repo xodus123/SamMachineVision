@@ -33,7 +33,8 @@
 
         <!-- Category tree -->
         <TreeView Grid.Row="1" ItemsSource="{Binding Categories}"
-                  Background="Transparent" BorderThickness="0" Margin="0,4,0,0">
+                  Background="Transparent" BorderThickness="0" Margin="0,4,0,0"
+                  ItemContainerStyle="{DynamicResource ExpandableTreeViewItem}">
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type vm:NodeCategoryItem}"
                                           ItemsSource="{Binding Nodes}">
@@ -53,7 +54,7 @@
                                     <Style TargetType="Border">
                                         <Style.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="#20FFFFFF" />
+                                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -71,11 +72,6 @@
                     </HierarchicalDataTemplate.ItemTemplate>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
-            <TreeView.ItemContainerStyle>
-                <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
-                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                </Style>
-            </TreeView.ItemContainerStyle>
         </TreeView>
     </Grid>
 </UserControl>

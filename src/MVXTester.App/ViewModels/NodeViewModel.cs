@@ -7,6 +7,7 @@ using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
 using MVXTester.Core.Models;
 using MVXTester.Core.Registry;
+using MVXTester.App.Services;
 
 namespace MVXTester.App.ViewModels;
 
@@ -128,9 +129,21 @@ public static class CategoryColorHelper
     {
         var src = GetBrush(category);
         var c = src.Color;
-        var r = (byte)(c.R * 0.4 + 0x2B * 0.6);
-        var g = (byte)(c.G * 0.4 + 0x2B * 0.6);
-        var b = (byte)(c.B * 0.4 + 0x3D * 0.6);
+        byte baseR, baseG, baseB;
+        double ratio;
+        if (ThemeManager.IsDarkTheme)
+        {
+            baseR = 0x2B; baseG = 0x2B; baseB = 0x3D;
+            ratio = 0.4;
+        }
+        else
+        {
+            baseR = 0xE6; baseG = 0xE9; baseB = 0xEF;
+            ratio = 0.35;
+        }
+        var r = (byte)(c.R * ratio + baseR * (1 - ratio));
+        var g = (byte)(c.G * ratio + baseG * (1 - ratio));
+        var b = (byte)(c.B * ratio + baseB * (1 - ratio));
         var brush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b));
         brush.Freeze();
         return brush;

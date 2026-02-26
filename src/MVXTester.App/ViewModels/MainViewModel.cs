@@ -9,6 +9,7 @@ using MVXTester.Core.Engine;
 using MVXTester.Core.Models;
 using MVXTester.Core.Registry;
 using MVXTester.Core.Serialization;
+using MVXTester.App.Services;
 
 namespace MVXTester.App.ViewModels;
 
@@ -29,6 +30,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _isPropertiesVisible = true;
     [ObservableProperty] private bool _isExecuteOutputVisible;
     [ObservableProperty] private int _selectedRightTab;
+    [ObservableProperty] private string _themeIcon = ThemeManager.IsDarkTheme ? "\u2600" : "\u263D";
 
     private string? _currentFilePath;
     private DispatcherTimer? _debounceTimer;
@@ -394,6 +396,13 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void ToggleExecuteOutput() => IsExecuteOutputVisible = !IsExecuteOutputVisible;
+
+    [RelayCommand]
+    private void ToggleTheme()
+    {
+        ThemeManager.ToggleTheme();
+        ThemeIcon = ThemeManager.IsDarkTheme ? "\u2600" : "\u263D";
+    }
 
     [RelayCommand]
     private void GeneratePythonCode()

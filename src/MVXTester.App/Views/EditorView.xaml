@@ -32,7 +32,7 @@
                          SelectedItems="{Binding SelectedNodes}"
                          ItemsDragStartedCommand="{Binding ItemsDragStartedCommand}"
                          ItemsDragCompletedCommand="{Binding ItemsDragCompletedCommand}"
-                         Background="#1E1E2E"
+                         Background="{DynamicResource BackgroundBrush}"
                          GridCellSize="20"
                          DisableAutoPanning="False"
                          AllowDrop="True"
@@ -67,7 +67,7 @@
                                        MaxWidth="160" MaxHeight="120"
                                        Stretch="Uniform" Margin="4"
                                        Visibility="{Binding PreviewImage, Converter={StaticResource NullToVis}}" />
-                                <Border Background="#40F38BA8" CornerRadius="2" Padding="4,2" Margin="4,0,4,4"
+                                <Border Background="{DynamicResource ErrorHintBrush}" CornerRadius="2" Padding="4,2" Margin="4,0,4,4"
                                         Visibility="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyToVis}}">
                                     <TextBlock Text="{Binding ErrorMessage}" FontSize="10"
                                                Foreground="{DynamicResource ErrorBrush}"
@@ -113,7 +113,7 @@
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="Button">
-                                            <Border x:Name="Bd" Background="#80F38BA8" CornerRadius="9"
+                                            <Border x:Name="Bd" Background="{DynamicResource ErrorSemiBrush}" CornerRadius="9"
                                                     Width="18" Height="18" Opacity="0">
                                                 <TextBlock Text="✕" FontSize="10" FontWeight="Bold"
                                                            Foreground="White"
@@ -129,7 +129,7 @@
                                                 </DataTrigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter TargetName="Bd" Property="Opacity" Value="1" />
-                                                    <Setter TargetName="Bd" Property="Background" Value="#F38BA8" />
+                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ErrorBrush}" />
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>

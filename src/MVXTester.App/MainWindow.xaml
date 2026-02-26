@@ -58,20 +58,8 @@
                     <Button Content="Force Execute" Command="{Binding ForceExecuteGraphCommand}" Margin="2"
                             ToolTip="Ctrl+F5" />
                     <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="6,2" />
-                    <Button Command="{Binding StreamGraphCommand}" Margin="2" ToolTip="F6 - Toggle Stream">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                <Setter Property="Content" Value="&#x25B6; Stream" />
-                                <Setter Property="FontWeight" Value="Bold" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsStreaming}" Value="True">
-                                        <Setter Property="Content" Value="&#x25A0; Stop" />
-                                        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
+                    <Button Style="{DynamicResource StreamButton}"
+                            Command="{Binding StreamGraphCommand}" Margin="2" ToolTip="F6 - Toggle Stream" />
                     <Button Content="Cancel" Command="{Binding CancelExecutionCommand}" Margin="2"
                             ToolTip="Esc" Foreground="{DynamicResource ErrorBrush}"
                             Visibility="{Binding IsExecuting, Converter={StaticResource BoolToVis}}" />
@@ -81,10 +69,15 @@
                     <CheckBox Content="Auto Execute" IsChecked="{Binding AutoExecute}" Margin="8,0"
                               VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" />
                 </StackPanel>
-                <TextBlock Text="MVXTester" DockPanel.Dock="Right"
-                           Foreground="{DynamicResource ForegroundDimBrush}"
-                           VerticalAlignment="Center" HorizontalAlignment="Right"
-                           FontSize="13" FontWeight="Bold" Margin="0,0,8,0" />
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                    <Button Content="{Binding ThemeIcon}" Command="{Binding ToggleThemeCommand}"
+                            Margin="2" ToolTip="Toggle Dark/Light Theme"
+                            FontSize="14" Padding="6,2" />
+                    <TextBlock Text="MVXTester"
+                               Foreground="{DynamicResource ForegroundDimBrush}"
+                               VerticalAlignment="Center"
+                               FontSize="13" FontWeight="Bold" Margin="8,0,8,0" />
+                </StackPanel>
             </DockPanel>
         </Border>
 

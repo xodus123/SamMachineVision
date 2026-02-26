@@ -24,7 +24,7 @@
         </Grid.RowDefinitions>
 
         <!-- Output image display -->
-        <Border Grid.Row="0" Background="#1E1E2E">
+        <Border Grid.Row="0" Background="{DynamicResource BackgroundBrush}">
             <Grid>
                 <TextBlock Text="Execute output will appear here"
                            Foreground="{DynamicResource ForegroundDimBrush}"

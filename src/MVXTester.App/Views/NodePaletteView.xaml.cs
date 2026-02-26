@@ -4,6 +4,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using MVXTester.Core.Registry;
+using MVXTester.App.Services;
 
 namespace MVXTester.App.Views;
 
@@ -88,11 +89,27 @@ public class DragGhostAdorner : Adorner
     {
         if (_lastPos == default) return;
 
+        Brush textBrush;
+        SolidColorBrush bgBrush;
+        Pen borderPen;
+        if (ThemeManager.IsDarkTheme)
+        {
+            textBrush = Brushes.White;
+            bgBrush = new SolidColorBrush(Color.FromArgb(0xD0, 0x3B, 0x3B, 0x52));
+            borderPen = new Pen(new SolidColorBrush(Color.FromArgb(0x80, 0x89, 0xB4, 0xFA)), 1);
+        }
+        else
+        {
+            textBrush = new SolidColorBrush(Color.FromRgb(0x4C, 0x4F, 0x69));
+            bgBrush = new SolidColorBrush(Color.FromArgb(0xE8, 0xE6, 0xE9, 0xEF));
+            borderPen = new Pen(new SolidColorBrush(Color.FromArgb(0x80, 0x1E, 0x66, 0xF5)), 1);
+        }
+
         var formattedText = new FormattedText(
             _text,
             System.Globalization.CultureInfo.CurrentCulture,
             FlowDirection.LeftToRight,
-            _typeface, 12, Brushes.White,
+            _typeface, 12, textBrush,
             VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
         var padding = 8.0;
@@ -101,10 +118,7 @@ public class DragGhostAdorner : Adorner
             formattedText.Width + padding * 2,
             formattedText.Height + padding);
 
-        dc.DrawRoundedRectangle(
-            new SolidColorBrush(Color.FromArgb(0xD0, 0x3B, 0x3B, 0x52)),
-            new Pen(new SolidColorBrush(Color.FromArgb(0x80, 0x89, 0xB4, 0xFA)), 1),
-            rect, 4, 4);
+        dc.DrawRoundedRectangle(bgBrush, borderPen, rect, 4, 4);
 
         dc.DrawText(formattedText, new Point(rect.X + padding, rect.Y + padding / 2));
     }
