@@ -4,7 +4,7 @@ using MVXTester.Core.Registry;
 
 namespace MVXTester.Nodes.Event;
 
-[NodeInfo("Mouse ROI", NodeCategories.Event, Description = "Draw ROI rectangle with mouse on execution output window")]
+[NodeInfo("Mouse ROI", NodeCategories.Event, Description = "Draw ROI rectangle with mouse on ImageShow window")]
 public class MouseRoiNode : BaseNode, IMouseEventReceiver
 {
     private OutputPort<Rect> _rectOutput = null!;
@@ -15,6 +15,7 @@ public class MouseRoiNode : BaseNode, IMouseEventReceiver
     private bool _isDrawing;
     private bool _hasRect;
     private readonly object _lock = new();
+    private bool _subscribed;
 
     protected override void Setup()
     {
@@ -58,6 +59,13 @@ public class MouseRoiNode : BaseNode, IMouseEventReceiver
 
     public override void Process()
     {
+        // Subscribe to RuntimeEventBus on first execution
+        if (!_subscribed)
+        {
+            RuntimeEventBus.MouseEvent += OnMouseEvent;
+            _subscribed = true;
+        }
+
         lock (_lock)
         {
             SetOutputValue(_isDrawingOutput, _isDrawing);
@@ -77,5 +85,15 @@ public class MouseRoiNode : BaseNode, IMouseEventReceiver
         }
 
         Error = null;
+    }
+
+    public override void Cleanup()
+    {
+        if (_subscribed)
+        {
+            RuntimeEventBus.MouseEvent -= OnMouseEvent;
+            _subscribed = false;
+        }
+        base.Cleanup();
     }
 }

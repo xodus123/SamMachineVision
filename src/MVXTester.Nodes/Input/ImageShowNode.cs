@@ -4,23 +4,11 @@ using MVXTester.Core.Registry;
 
 namespace MVXTester.Nodes.Input;
 
-[NodeInfo("Image Show", NodeCategories.Input, Description = "Display image in OpenCV window with mouse/keyboard event support")]
-public class ImageShowNode : BaseNode, IMouseEventReceiver
+[NodeInfo("Image Show", NodeCategories.Input, Description = "Display image in OpenCV window (mouse/keyboard events sent to Event nodes via RuntimeEventBus)")]
+public class ImageShowNode : BaseNode
 {
     private InputPort<Mat> _imageInput = null!;
-    private OutputPort<int> _mouseXOutput = null!;
-    private OutputPort<int> _mouseYOutput = null!;
-    private OutputPort<string> _mouseEventOutput = null!;
-    private OutputPort<bool> _mousePressedOutput = null!;
-    private OutputPort<int> _keyCodeOutput = null!;
-    private OutputPort<string> _keyNameOutput = null!;
     private NodeProperty _windowName = null!;
-
-    // Mouse/keyboard event data (thread-safe)
-    private MouseEventData? _lastEvent;
-    private bool _isPressed;
-    private int _lastKeyCode = -1;
-    private readonly object _eventLock = new();
 
     // Dedicated display thread for OpenCV HighGUI
     // (ImShow/WaitKey/SetMouseCallback must all run on the same thread)
@@ -37,41 +25,7 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
     protected override void Setup()
     {
         _imageInput = AddInput<Mat>("Image");
-        _mouseXOutput = AddOutput<int>("MouseX");
-        _mouseYOutput = AddOutput<int>("MouseY");
-        _mouseEventOutput = AddOutput<string>("MouseEvent");
-        _mousePressedOutput = AddOutput<bool>("MousePressed");
-        _keyCodeOutput = AddOutput<int>("KeyCode");
-        _keyNameOutput = AddOutput<string>("KeyName");
         _windowName = AddStringProperty("WindowName", "Window Name", "Image", "Display window name");
-    }
-
-    /// <summary>
-    /// Receives mouse events from the OpenCV window callback (primary)
-    /// or from ExecuteOutput panel routing (secondary).
-    /// </summary>
-    public void OnMouseEvent(MouseEventData eventData)
-    {
-        lock (_eventLock)
-        {
-            _lastEvent = eventData;
-
-            switch (eventData.EventType)
-            {
-                case MouseEventType.LeftDown:
-                case MouseEventType.RightDown:
-                case MouseEventType.MiddleDown:
-                    _isPressed = true;
-                    break;
-                case MouseEventType.LeftUp:
-                case MouseEventType.RightUp:
-                case MouseEventType.MiddleUp:
-                    _isPressed = false;
-                    break;
-            }
-        }
-
-        IsDirty = true;
     }
 
     public override void Process()
@@ -95,24 +49,7 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
                 _pendingImage = image.Clone();
             }
 
-            // Output event data from last received events
-            lock (_eventLock)
-            {
-                if (_lastEvent != null)
-                {
-                    SetOutputValue(_mouseXOutput, _lastEvent.X);
-                    SetOutputValue(_mouseYOutput, _lastEvent.Y);
-                    SetOutputValue(_mouseEventOutput, _lastEvent.EventType.ToString());
-                    SetOutputValue(_mousePressedOutput, _isPressed);
-                }
-                if (_lastKeyCode >= 0)
-                {
-                    SetOutputValue(_keyCodeOutput, _lastKeyCode);
-                    SetOutputValue(_keyNameOutput, ((char)_lastKeyCode).ToString());
-                }
-            }
-
-            // Also set preview for ExecuteOutput panel display
+            // Set preview for Execute Output panel (mirror)
             SetPreview(image);
             Error = null;
         }
@@ -142,6 +79,7 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
     /// <summary>
     /// Dedicated thread loop for OpenCV HighGUI operations.
     /// ImShow, WaitKey, and SetMouseCallback all run on this single thread.
+    /// Mouse/keyboard events are published to RuntimeEventBus for Event nodes to consume.
     /// </summary>
     private void DisplayLoop()
     {
@@ -169,7 +107,7 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
                     windowCreated = true;
                     if (!callbackRegistered)
                     {
-                        // Store delegate in field to prevent GC collection (P/Invoke prevent)
+                        // Store delegate in field to prevent GC collection
                         _mouseCallbackDelegate = OnOpenCvMouseCallback;
                         Cv2.SetMouseCallback(windowName, _mouseCallbackDelegate);
                         callbackRegistered = true;
@@ -185,11 +123,8 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
                         var key = Cv2.WaitKey(1);
                         if (key >= 0)
                         {
-                            lock (_eventLock)
-                            {
-                                _lastKeyCode = key;
-                            }
-                            IsDirty = true;
+                            // Publish keyboard event to RuntimeEventBus → KeyboardEventNode
+                            RuntimeEventBus.RaiseKeyEvent(key);
                         }
                     }
                     catch
@@ -218,13 +153,15 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
 
     /// <summary>
     /// Called by OpenCV on the display thread when mouse events occur on the window.
+    /// Publishes to RuntimeEventBus so MouseEventNode / MouseRoiNode can receive them.
     /// </summary>
     private void OnOpenCvMouseCallback(MouseEventTypes eventType, int x, int y, MouseEventFlags flags, IntPtr userdata)
     {
         var mapped = MapMouseEventType(eventType);
         if (mapped == null) return;
 
-        OnMouseEvent(new MouseEventData
+        // Publish to RuntimeEventBus → MouseEventNode, MouseRoiNode
+        RuntimeEventBus.RaiseMouseEvent(new MouseEventData
         {
             EventType = mapped.Value,
             X = x,

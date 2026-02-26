@@ -3,7 +3,7 @@ using MVXTester.Core.Registry;
 
 namespace MVXTester.Nodes.Event;
 
-[NodeInfo("Mouse Event", NodeCategories.Event, Description = "Receive mouse events from execution output window")]
+[NodeInfo("Mouse Event", NodeCategories.Event, Description = "Receive mouse events from ImageShow window")]
 public class MouseEventNode : BaseNode, IMouseEventReceiver
 {
     private OutputPort<int> _xOutput = null!;
@@ -15,6 +15,7 @@ public class MouseEventNode : BaseNode, IMouseEventReceiver
     private MouseEventData? _lastEvent;
     private bool _isPressed;
     private readonly object _lock = new();
+    private bool _subscribed;
 
     protected override void Setup()
     {
@@ -51,6 +52,13 @@ public class MouseEventNode : BaseNode, IMouseEventReceiver
 
     public override void Process()
     {
+        // Subscribe to RuntimeEventBus on first execution
+        if (!_subscribed)
+        {
+            RuntimeEventBus.MouseEvent += OnMouseEvent;
+            _subscribed = true;
+        }
+
         lock (_lock)
         {
             if (_lastEvent != null)
@@ -64,5 +72,15 @@ public class MouseEventNode : BaseNode, IMouseEventReceiver
         }
 
         Error = null;
+    }
+
+    public override void Cleanup()
+    {
+        if (_subscribed)
+        {
+            RuntimeEventBus.MouseEvent -= OnMouseEvent;
+            _subscribed = false;
+        }
+        base.Cleanup();
     }
 }
