@@ -4,7 +4,7 @@ using MVXTester.Core.Registry;
 
 namespace MVXTester.Nodes.Input;
 
-[NodeInfo("Image Show", NodeCategories.Input, Description = "Display image in OpenCV window with mouse event support")]
+[NodeInfo("Image Show", NodeCategories.Input, Description = "Display image in output window with mouse event support")]
 public class ImageShowNode : BaseNode, IMouseEventReceiver
 {
     private InputPort<Mat> _imageInput = null!;
@@ -12,13 +12,10 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
     private OutputPort<int> _mouseYOutput = null!;
     private OutputPort<string> _mouseEventOutput = null!;
     private OutputPort<bool> _mousePressedOutput = null!;
-    private NodeProperty _windowName = null!;
 
     private MouseEventData? _lastEvent;
     private bool _isPressed;
     private readonly object _lock = new();
-    private string? _currentWindowName;
-    private bool _callbackRegistered;
 
     protected override void Setup()
     {
@@ -27,7 +24,6 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
         _mouseYOutput = AddOutput<int>("MouseY");
         _mouseEventOutput = AddOutput<string>("MouseEvent");
         _mousePressedOutput = AddOutput<bool>("MousePressed");
-        _windowName = AddStringProperty("WindowName", "Window Name", "Image", "Display window name");
     }
 
     public void OnMouseEvent(MouseEventData eventData)
@@ -65,29 +61,6 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
                 return;
             }
 
-            var windowName = _windowName.GetValue<string>();
-            if (string.IsNullOrWhiteSpace(windowName))
-                windowName = "Image";
-
-            // Destroy old window if name changed
-            if (_currentWindowName != null && _currentWindowName != windowName)
-            {
-                try { Cv2.DestroyWindow(_currentWindowName); } catch { }
-                _callbackRegistered = false;
-            }
-            _currentWindowName = windowName;
-
-            Cv2.ImShow(windowName, image);
-
-            // Register mouse callback after ImShow (window must exist)
-            if (!_callbackRegistered)
-            {
-                Cv2.SetMouseCallback(windowName, OnOpenCvMouseCallback);
-                _callbackRegistered = true;
-            }
-
-            Cv2.WaitKey(1);
-
             // Output mouse event data
             lock (_lock)
             {
@@ -100,6 +73,7 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
                 }
             }
 
+            // Set preview for ExecuteOutput panel display
             SetPreview(image);
             Error = null;
         }
@@ -107,59 +81,5 @@ public class ImageShowNode : BaseNode, IMouseEventReceiver
         {
             Error = $"Image Show error: {ex.Message}";
         }
-    }
-
-    private void OnOpenCvMouseCallback(MouseEventTypes eventType, int x, int y, MouseEventFlags flags, IntPtr userdata)
-    {
-        var mapped = MapMouseEventType(eventType);
-        if (mapped == null) return;
-
-        OnMouseEvent(new MouseEventData
-        {
-            EventType = mapped.Value,
-            X = x,
-            Y = y,
-            Button = GetButton(eventType)
-        });
-    }
-
-    private static MouseEventType? MapMouseEventType(MouseEventTypes cvEvent)
-    {
-        return cvEvent switch
-        {
-            MouseEventTypes.MouseMove => MouseEventType.Move,
-            MouseEventTypes.LButtonDown => MouseEventType.LeftDown,
-            MouseEventTypes.LButtonUp => MouseEventType.LeftUp,
-            MouseEventTypes.RButtonDown => MouseEventType.RightDown,
-            MouseEventTypes.RButtonUp => MouseEventType.RightUp,
-            MouseEventTypes.MButtonDown => MouseEventType.MiddleDown,
-            MouseEventTypes.MButtonUp => MouseEventType.MiddleUp,
-            MouseEventTypes.MouseWheel => MouseEventType.Wheel,
-            _ => null
-        };
-    }
-
-    private static int GetButton(MouseEventTypes cvEvent)
-    {
-        return cvEvent switch
-        {
-            MouseEventTypes.LButtonDown or MouseEventTypes.LButtonUp => 0,
-            MouseEventTypes.MButtonDown or MouseEventTypes.MButtonUp => 1,
-            MouseEventTypes.RButtonDown or MouseEventTypes.RButtonUp => 2,
-            _ => -1
-        };
-    }
-
-    public override void Cleanup()
-    {
-        try
-        {
-            if (_currentWindowName != null)
-                Cv2.DestroyWindow(_currentWindowName);
-        }
-        catch { }
-        _callbackRegistered = false;
-        _currentWindowName = null;
-        base.Cleanup();
     }
 }
