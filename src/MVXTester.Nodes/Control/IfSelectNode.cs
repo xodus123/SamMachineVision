@@ -23,25 +23,25 @@ public class IfSelectNode : BaseNode
     {
         try
         {
+            var condition = GetInputValue(_conditionInput);
             var trueConnected = _trueInput.IsConnected;
             var falseConnected = _falseInput.IsConnected;
 
-            // Only True connected → pass-through True Value (no selection)
-            if (trueConnected && !falseConnected)
+            if (trueConnected && falseConnected)
             {
-                SetOutputValue(_resultOutput, GetInputValue(_trueInput));
-            }
-            // Only False connected → pass-through False Value (no selection)
-            else if (!trueConnected && falseConnected)
-            {
-                SetOutputValue(_resultOutput, GetInputValue(_falseInput));
-            }
-            // Both connected → select based on Condition
-            else if (trueConnected && falseConnected)
-            {
-                var condition = GetInputValue(_conditionInput);
+                // Both connected → select based on Condition
                 var result = condition ? GetInputValue(_trueInput) : GetInputValue(_falseInput);
                 SetOutputValue(_resultOutput, result);
+            }
+            else if (trueConnected && !falseConnected)
+            {
+                // True only → output True Value when condition is true, null (skip) when false
+                SetOutputValue(_resultOutput, condition ? GetInputValue(_trueInput) : null);
+            }
+            else if (!trueConnected && falseConnected)
+            {
+                // False only → output False Value when condition is false, null (skip) when true
+                SetOutputValue(_resultOutput, !condition ? GetInputValue(_falseInput) : null);
             }
             else
             {
