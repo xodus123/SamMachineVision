@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git ls-remote https://github.com/samcho93/MVXTester.git)",
+      "Bash(git init)",
+      "Bash(git remote add origin https://github.com/samcho93/MVXTester.git)",
+      "Bash(git fetch origin)",
+      "Bash(git checkout main)",
+      "Bash(dotnet build MVXTester.sln)",
+      "Bash(git add src/MVXTester.Core/Models/BaseNode.cs src/MVXTester.Core/Engine/GraphExecutor.cs src/MVXTester.App/ViewModels/EditorViewModel.cs src/MVXTester.App/ViewModels/MainViewModel.cs src/MVXTester.Nodes/Drawing/DrawRectangleNode.cs src/MVXTester.Nodes/Drawing/DrawCircleNode.cs src/MVXTester.Nodes/Drawing/DrawLineNode.cs src/MVXTester.Nodes/Drawing/DrawTextNode.cs src/MVXTester.Nodes/Drawing/DrawEllipseNode.cs src/MVXTester.Nodes/Drawing/DrawCrosshairNode.cs src/MVXTester.Nodes/Drawing/DrawGridNode.cs)",
+      "Bash(git commit:*)",
+      "Bash(git config user.email \"samcho93@users.noreply.github.com\")",
+      "Bash(git config user.name \"samcho93\")",
+      "Bash(git push origin main)",
+      "Bash(dotnet build MVXTester.sln -c Debug -p:Platform=x64)",
+      "Bash(dotnet run --project src/MVXTester.App/MVXTester.App.csproj -c Debug -p:Platform=x64)"
+    ]
+  }
+}
