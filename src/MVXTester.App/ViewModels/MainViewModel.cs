@@ -257,22 +257,15 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 실행 중이면 정지 여부를 묻는 팝업을 표시합니다.
-    /// 사용자가 승인하면 실행을 정지하고 true를 반환, 취소하면 false를 반환합니다.
+    /// 실행 중이면 즉시 정지하고 완료를 대기합니다.
     /// 실행 중이 아니면 즉시 true를 반환합니다.
     /// </summary>
     private async Task<bool> ConfirmAndStopExecution()
     {
         if (!Editor.IsExecuting) return true;
 
-        var result = MessageBox.Show(
-            "실행 중입니다. 정지하시겠습니까?",
-            "실행 중",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-
-        if (result != MessageBoxResult.Yes) return false;
-
+        // MessageBox의 nested message loop이 Dispatcher.BeginInvoke와 교착을 일으키므로
+        // 팝업 없이 즉시 정지 후 완료 대기
         await Editor.StopExecutionAsync();
         StatusText = "Execution stopped";
         return true;
