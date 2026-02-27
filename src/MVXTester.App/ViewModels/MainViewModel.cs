@@ -353,6 +353,22 @@ public partial class MainViewModel : ObservableObject
                     if (entry != null)
                     {
                         vm = Editor.AddNodeInternal(entry, new Point(nodeData.X, nodeData.Y), nodeData.Id);
+
+                        // FunctionNode도 저장된 프로퍼티 복원 (CustomName 등)
+                        foreach (var kvp in nodeData.Properties)
+                        {
+                            var prop = vm.Model.Properties.FirstOrDefault(p => p.Name == kvp.Key);
+                            if (prop != null)
+                            {
+                                try
+                                {
+                                    var value = kvp.Value.Deserialize(prop.ValueType);
+                                    prop.SetValue(value);
+                                }
+                                catch { }
+                            }
+                        }
+
                         nodeMap[nodeData.Id] = vm;
                         continue;
                     }

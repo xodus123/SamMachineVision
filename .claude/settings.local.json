@@ -28,7 +28,10 @@
       "Bash(cmd /c \"dir /s /b %USERPROFILE%\\\\.nuget\\\\packages\\\\nodify\\\\7.2.0\\\\lib\\\\*.dll\")",
       "Bash(dotnet nuget locals global-packages -l)",
       "Bash(dotnet tool list -g)",
-      "Bash(dotnet build --no-restore)"
+      "Bash(dotnet build --no-restore)",
+      "Bash(xargs grep -l \"class NodeProperty\")",
+      "Bash(xargs grep -l \"ReconstructGraph\\\\|GraphSerializer.ReconstructGraph\")",
+      "Bash(xargs grep -l \"NodeRegistry\\\\|CreateNode\\\\|FunctionNode\")"
     ]
   }
 }
