@@ -31,7 +31,9 @@
       "Bash(dotnet build --no-restore)",
       "Bash(xargs grep -l \"class NodeProperty\")",
       "Bash(xargs grep -l \"ReconstructGraph\\\\|GraphSerializer.ReconstructGraph\")",
-      "Bash(xargs grep -l \"NodeRegistry\\\\|CreateNode\\\\|FunctionNode\")"
+      "Bash(xargs grep -l \"NodeRegistry\\\\|CreateNode\\\\|FunctionNode\")",
+      "Bash(xargs grep -l \"class.*Engine\\\\|ExecutionEngine\")",
+      "Bash(xargs grep -l \"IsStreaming\")"
     ]
   }
 }

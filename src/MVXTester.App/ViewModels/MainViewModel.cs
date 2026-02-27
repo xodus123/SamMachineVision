@@ -186,8 +186,10 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void NewGraph()
+    private async Task NewGraph()
     {
+        if (!await ConfirmAndStopExecution()) return;
+
         Editor.Clear();
         ProjectArchive.CleanupExtractDir(_currentExtractDir);
         _currentExtractDir = null;
@@ -199,8 +201,10 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Open()
+    private async Task Open()
     {
+        if (!await ConfirmAndStopExecution()) return;
+
         var dialog = new OpenFileDialog
         {
             Filter = "MVXTester Project (*.mvxp)|*.mvxp|MVXTester Graph (*.mvx)|*.mvx|JSON Files (*.json)|*.json|All Files (*.*)|*.*",
@@ -223,7 +227,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task Save()
     {
-        await StopExecutionForSave();
+        if (!await ConfirmAndStopExecution()) return;
 
         if (_currentFilePath != null)
             SaveGraph(_currentFilePath);
@@ -234,7 +238,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveAs()
     {
-        await StopExecutionForSave();
+        if (!await ConfirmAndStopExecution()) return;
         SaveAs_Internal();
     }
 
@@ -253,19 +257,29 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Stops any running execution before saving to prevent concurrent access
-    /// to graph.Nodes/Connections (which would freeze the program).
+    /// 실행 중이면 정지 여부를 묻는 팝업을 표시합니다.
+    /// 사용자가 승인하면 실행을 정지하고 true를 반환, 취소하면 false를 반환합니다.
+    /// 실행 중이 아니면 즉시 true를 반환합니다.
     /// </summary>
-    private async Task StopExecutionForSave()
+    private async Task<bool> ConfirmAndStopExecution()
     {
-        if (!Editor.IsExecuting) return;
+        if (!Editor.IsExecuting) return true;
+
+        var result = MessageBox.Show(
+            "실행 중입니다. 정지하시겠습니까?",
+            "실행 중",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result != MessageBoxResult.Yes) return false;
 
         Editor.CancelExecution();
-        // Wait for execution to actually finish
+        // 실행이 완전히 종료될 때까지 대기
         for (int i = 0; i < 100 && Editor.IsExecuting; i++)
             await Task.Delay(50);
 
-        StatusText = "Execution stopped for save";
+        StatusText = "Execution stopped";
+        return true;
     }
 
     private void SaveGraph(string path)
