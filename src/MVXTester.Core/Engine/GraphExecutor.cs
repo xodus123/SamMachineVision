@@ -39,6 +39,20 @@ public class GraphExecutor
     {
         var delay = TimeSpan.FromMilliseconds(1000.0 / targetFps);
 
+        foreach (var n in graph.Nodes) n.IsRuntimeMode = true;
+        try
+        {
+        ExecuteContinuousCore(graph, cancellationToken, onFrameComplete, delay);
+        }
+        finally
+        {
+            foreach (var n in graph.Nodes) n.IsRuntimeMode = false;
+        }
+    }
+
+    private void ExecuteContinuousCore(NodeGraph graph, CancellationToken cancellationToken,
+        Action? onFrameComplete, TimeSpan delay)
+    {
         // Initial force execution
         var order = TopologicalSort(graph.Nodes, graph.Connections);
         foreach (var node in order)
@@ -105,6 +119,20 @@ public class GraphExecutor
 
     public void ExecuteRuntime(NodeGraph graph, CancellationToken cancellationToken,
         Action? onFrameComplete = null, int pollIntervalMs = 16)
+    {
+        foreach (var n in graph.Nodes) n.IsRuntimeMode = true;
+        try
+        {
+        ExecuteRuntimeCore(graph, cancellationToken, onFrameComplete, pollIntervalMs);
+        }
+        finally
+        {
+            foreach (var n in graph.Nodes) n.IsRuntimeMode = false;
+        }
+    }
+
+    private void ExecuteRuntimeCore(NodeGraph graph, CancellationToken cancellationToken,
+        Action? onFrameComplete, int pollIntervalMs)
     {
         // Phase 1: Initial force execution of all nodes
         var order = TopologicalSort(graph.Nodes, graph.Connections);

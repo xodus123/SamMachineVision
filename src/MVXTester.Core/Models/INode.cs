@@ -38,6 +38,7 @@ public interface INode
     IReadOnlyList<IOutputPort> Outputs { get; }
     IReadOnlyList<NodeProperty> Properties { get; }
     bool IsDirty { get; set; }
+    bool IsRuntimeMode { get; set; }
     string? Error { get; set; }
     Mat? PreviewMat { get; }
     Mat? ClonePreview();

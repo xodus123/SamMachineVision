@@ -30,6 +30,7 @@ public abstract class BaseNode : INode
     public IReadOnlyList<IOutputPort> Outputs => _outputs;
     public IReadOnlyList<NodeProperty> Properties => _properties;
     public bool IsDirty { get; set; } = true;
+    public bool IsRuntimeMode { get; set; }
     public string? Error { get; set; }
     public Mat? PreviewMat { get; protected set; }
     public readonly object PreviewLock = new();

@@ -39,17 +39,20 @@ public class ImageShowNode : BaseNode
                 return;
             }
 
-            // Start dedicated display thread if not running
-            EnsureDisplayThread();
-
-            // Queue image for display on the dedicated thread
-            lock (_imageLock)
+            // Only show OpenCV window in runtime mode (F5 Execute)
+            if (IsRuntimeMode)
             {
-                _pendingImage?.Dispose();
-                _pendingImage = image.Clone();
+                // Start dedicated display thread if not running
+                EnsureDisplayThread();
+
+                // Queue image for display on the dedicated thread
+                lock (_imageLock)
+                {
+                    _pendingImage?.Dispose();
+                    _pendingImage = image.Clone();
+                }
             }
 
-            // Set preview for Execute Output panel (mirror)
             SetPreview(image);
             Error = null;
         }
