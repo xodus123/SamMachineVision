@@ -208,16 +208,20 @@ public class GraphExecutor
 
     public static List<INode> TopologicalSort(IReadOnlyList<INode> nodes, IReadOnlyList<IConnection> connections)
     {
+        // 스냅샷을 만들어 열거 중 컬렉션 변경에 의한 예외 방지
+        var nodesSnapshot = nodes.ToArray();
+        var connsSnapshot = connections.ToArray();
+
         var inDegree = new Dictionary<INode, int>();
         var adjacency = new Dictionary<INode, List<INode>>();
 
-        foreach (var node in nodes)
+        foreach (var node in nodesSnapshot)
         {
             inDegree[node] = 0;
             adjacency[node] = new List<INode>();
         }
 
-        foreach (var conn in connections)
+        foreach (var conn in connsSnapshot)
         {
             var src = conn.Source.Owner;
             var tgt = conn.Target.Owner;
@@ -243,7 +247,7 @@ public class GraphExecutor
             }
         }
 
-        if (result.Count != nodes.Count)
+        if (result.Count != nodesSnapshot.Length)
             throw new InvalidOperationException("Graph contains a cycle.");
 
         return result;

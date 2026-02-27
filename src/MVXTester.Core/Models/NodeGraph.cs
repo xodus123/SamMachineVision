@@ -65,10 +65,12 @@ public class NodeGraph
     public void MarkDirtyDownstream(INode node)
     {
         node.IsDirty = true;
-        var downstream = _connections
+        // 스냅샷으로 열거하여 동시 수정 예외 방지
+        var downstream = _connections.ToArray()
             .Where(c => c.Source.Owner == node)
             .Select(c => c.Target.Owner)
-            .Distinct();
+            .Distinct()
+            .ToList();
 
         foreach (var n in downstream)
             MarkDirtyDownstream(n);
@@ -81,13 +83,15 @@ public class NodeGraph
         var visited = new HashSet<INode>();
         var queue = new Queue<INode>();
         queue.Enqueue(from);
+        // 스냅샷으로 열거하여 동시 수정 예외 방지
+        var connsSnapshot = _connections.ToArray();
 
         while (queue.Count > 0)
         {
             var current = queue.Dequeue();
             if (!visited.Add(current)) continue;
 
-            var upstreamNodes = _connections
+            var upstreamNodes = connsSnapshot
                 .Where(c => c.Target.Owner == current)
                 .Select(c => c.Source.Owner);
 
