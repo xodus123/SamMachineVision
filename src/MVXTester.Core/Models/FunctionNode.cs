@@ -41,6 +41,11 @@ public class FunctionNode : BaseNode
     {
         _sourceFilePath = filePath;
 
+        // 노드 이름을 파일명(확장자 제외)으로 설정
+        Name = System.IO.Path.GetFileNameWithoutExtension(filePath);
+        Category = "Function";
+        Description = $"Function: {Name}";
+
         // 직렬화용 프로퍼티 추가 (저장/로드 시 파일 경로 복원에 사용)
         AddFilePathProperty("SourceFilePath", "Source File", filePath,
             "Function source project file path");

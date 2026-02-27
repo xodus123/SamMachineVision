@@ -73,9 +73,6 @@
                     <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="6,2" />
                     <Button Style="{DynamicResource StreamButton}"
                             Command="{Binding StreamGraphCommand}" Margin="2" ToolTip="F6 - Toggle Stream" />
-                    <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="6,2" />
-                    <Button Content="Output" Command="{Binding ToggleExecuteOutputCommand}" Margin="2"
-                            ToolTip="Toggle Execute Output Window" />
                     <CheckBox Content="Auto Execute" IsChecked="{Binding AutoExecute}" Margin="8,0"
                               VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" />
                 </StackPanel>
@@ -151,45 +148,8 @@
             <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Center"
                           Background="{DynamicResource BorderBrush}" />
 
-            <!-- Center: Node Editor + Execute Output -->
-            <Grid Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <!-- Node editor canvas -->
-                <views:EditorView Grid.Row="0" DataContext="{Binding Editor}" />
-
-                <!-- Execute Output splitter -->
-                <GridSplitter Grid.Row="1" Height="3" HorizontalAlignment="Stretch"
-                              Background="{DynamicResource BorderBrush}"
-                              Visibility="{Binding IsExecuteOutputVisible, Converter={StaticResource BoolToVisConv}}" />
-
-                <!-- Execute Output panel -->
-                <Border Grid.Row="2" Height="300"
-                        Visibility="{Binding IsExecuteOutputVisible, Converter={StaticResource BoolToVisConv}}">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <DockPanel Grid.Row="0" Background="{DynamicResource SurfaceBrush}"
-                                   Margin="0,0,0,1">
-                            <Button DockPanel.Dock="Right" Content="X"
-                                    Command="{Binding ToggleExecuteOutputCommand}"
-                                    Width="24" Height="24" FontSize="10" Padding="0"
-                                    ToolTip="Close Execute Output"
-                                    Margin="4,2" />
-                            <TextBlock Text="Execute Output" FontWeight="Bold" FontSize="12"
-                                       Foreground="{DynamicResource ForegroundBrush}"
-                                       VerticalAlignment="Center" Margin="8,4" />
-                        </DockPanel>
-                        <views:ExecuteOutputView Grid.Row="1" DataContext="{Binding ExecuteOutput}" />
-                    </Grid>
-                </Border>
-            </Grid>
+            <!-- Center: Node Editor -->
+            <views:EditorView Grid.Column="2" DataContext="{Binding Editor}" />
 
             <GridSplitter Grid.Column="3" Width="3" HorizontalAlignment="Center"
                           Background="{DynamicResource BorderBrush}" />

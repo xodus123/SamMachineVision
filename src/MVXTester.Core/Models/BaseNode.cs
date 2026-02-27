@@ -23,9 +23,9 @@ public abstract class BaseNode : INode
     private readonly List<NodeProperty> _properties = new();
 
     public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
-    public string Name { get; }
-    public string Category { get; }
-    public string Description { get; }
+    public string Name { get; protected set; }
+    public string Category { get; protected set; }
+    public string Description { get; protected set; }
     public IReadOnlyList<IInputPort> Inputs => _inputs;
     public IReadOnlyList<IOutputPort> Outputs => _outputs;
     public IReadOnlyList<NodeProperty> Properties => _properties;

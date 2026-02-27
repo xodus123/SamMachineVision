@@ -18,7 +18,6 @@ public partial class MainViewModel : ObservableObject
     public EditorViewModel Editor { get; }
     public NodePaletteViewModel Palette { get; }
     public PropertyEditorViewModel PropertyEditor { get; }
-    public ExecuteOutputViewModel ExecuteOutput { get; }
     public NodeRegistry Registry { get; }
 
     [ObservableProperty] private string _statusText = "Ready";
@@ -28,7 +27,6 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _title = "MVXTester";
     [ObservableProperty] private bool _isPaletteVisible = true;
     [ObservableProperty] private bool _isPropertiesVisible = true;
-    [ObservableProperty] private bool _isExecuteOutputVisible;
     [ObservableProperty] private int _selectedRightTab;
     [ObservableProperty] private string _themeIcon = ThemeManager.IsDarkTheme ? "\u2600" : "\u263D";
 
@@ -60,8 +58,6 @@ public partial class MainViewModel : ObservableObject
         Editor = new EditorViewModel(Registry);
         Palette = new NodePaletteViewModel(Registry, OnNodeSelectedFromPalette);
         PropertyEditor = new PropertyEditorViewModel();
-        ExecuteOutput = new ExecuteOutputViewModel();
-
         PropertyEditor.Initialize(Editor.UndoManager, Editor);
 
         Editor.NodeSelected += node =>
@@ -93,12 +89,6 @@ public partial class MainViewModel : ObservableObject
                 StatusText = $"Executed ({ExecutionTime})";
             }
             PropertyEditor.UpdateResultImage();
-
-            // Update execute output with last ImageShow node result
-            if (IsExecuteOutputVisible)
-            {
-                UpdateExecuteOutput();
-            }
         };
 
         Editor.PropertyChanged += (_, e) =>
@@ -152,23 +142,6 @@ public partial class MainViewModel : ObservableObject
             }
         };
 
-        // ExecuteOutput is preview-only; all mouse/keyboard events
-        // come from ImageShow node's OpenCV window via Cv2.SetMouseCallback
-    }
-
-    private void UpdateExecuteOutput()
-    {
-        // Find the last node with a preview image
-        foreach (var n in Editor.Nodes.Reverse())
-        {
-            var snapshot = n.Model.ClonePreview();
-            if (snapshot != null)
-            {
-                ExecuteOutput.UpdateImage(snapshot);
-                snapshot.Dispose();
-                break;
-            }
-        }
     }
 
     private async void OnNodeSelectedFromPalette(NodeRegistryEntry entry)
@@ -419,7 +392,6 @@ public partial class MainViewModel : ObservableObject
         }
         else
         {
-            IsExecuteOutputVisible = true;
             StatusText = "Runtime...";
             await Editor.StartRuntime();
             StatusText = "Stopped";
@@ -461,9 +433,6 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void ToggleProperties() => IsPropertiesVisible = !IsPropertiesVisible;
-
-    [RelayCommand]
-    private void ToggleExecuteOutput() => IsExecuteOutputVisible = !IsExecuteOutputVisible;
 
     [RelayCommand]
     private void ToggleTheme()
