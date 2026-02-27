@@ -30,6 +30,7 @@ public partial class EditorViewModel : ObservableObject
     private bool _isExecuting;
     private bool _isStreaming;
     private CancellationTokenSource? _executionCts;
+    private TaskCompletionSource? _executionDoneTcs;
     private int _uiUpdatePending;
     private bool _isSyncingSelection;
 
@@ -749,6 +750,7 @@ public partial class EditorViewModel : ObservableObject
         finally
         {
             IsExecuting = false;
+            _executionDoneTcs?.TrySetResult();
         }
     }
 
@@ -801,6 +803,7 @@ public partial class EditorViewModel : ObservableObject
             }
 
             IsExecuting = false;
+            _executionDoneTcs?.TrySetResult();
             foreach (var nodeVm in Nodes)
                 nodeVm.UpdatePreview();
             GraphExecuted?.Invoke();
@@ -831,6 +834,7 @@ public partial class EditorViewModel : ObservableObject
         finally
         {
             IsExecuting = false;
+            _executionDoneTcs?.TrySetResult();
         }
     }
 
@@ -884,6 +888,7 @@ public partial class EditorViewModel : ObservableObject
 
             IsExecuting = false;
             IsStreaming = false;
+            _executionDoneTcs?.TrySetResult();
             foreach (var nodeVm in Nodes)
                 nodeVm.UpdatePreview();
             GraphExecuted?.Invoke();
@@ -894,6 +899,25 @@ public partial class EditorViewModel : ObservableObject
     public void CancelExecution()
     {
         _executionCts?.Cancel();
+    }
+
+    /// <summary>
+    /// 실행을 취소하고, 실행이 완전히 종료될 때까지 비동기적으로 대기합니다.
+    /// </summary>
+    public async Task StopExecutionAsync(int timeoutMs = 5000)
+    {
+        if (!IsExecuting) return;
+
+        _executionDoneTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancelExecution();
+
+        // 타임아웃 적용하여 무한 대기 방지
+        var completed = await Task.WhenAny(_executionDoneTcs.Task, Task.Delay(timeoutMs));
+        if (completed != _executionDoneTcs.Task)
+        {
+            // 타임아웃: 강제 진행
+            _executionDoneTcs = null;
+        }
     }
 
     public TimeSpan LastExecutionTime => _executor.LastExecutionTime;

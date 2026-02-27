@@ -273,11 +273,7 @@ public partial class MainViewModel : ObservableObject
 
         if (result != MessageBoxResult.Yes) return false;
 
-        Editor.CancelExecution();
-        // 실행이 완전히 종료될 때까지 대기
-        for (int i = 0; i < 100 && Editor.IsExecuting; i++)
-            await Task.Delay(50);
-
+        await Editor.StopExecutionAsync();
         StatusText = "Execution stopped";
         return true;
     }
