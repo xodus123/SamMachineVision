@@ -11,19 +11,6 @@ public partial class EditorView : UserControl
     public EditorView()
     {
         InitializeComponent();
-        Loaded += OnLoaded;
-    }
-
-    private void OnLoaded(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is EditorViewModel vm)
-        {
-            vm.AutoConnectRequested += movedNodes =>
-            {
-                Editor.UpdateLayout();
-                vm.AutoConnectByProximity(movedNodes);
-            };
-        }
     }
 
     private void Connection_MouseRightButtonDown(object sender, MouseButtonEventArgs e)

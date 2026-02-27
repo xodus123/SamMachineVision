@@ -57,7 +57,6 @@ public partial class EditorViewModel : ObservableObject
     public event Func<NodeViewModel, Task>? NodeDoubleClicked;
     public event Action<string>? ConnectionWarning;
     public event Action<NodeViewModel>? NodeDropped;
-    public event Action<List<NodeViewModel>>? AutoConnectRequested;
 
     public EditorViewModel(NodeRegistry registry)
     {
@@ -635,87 +634,6 @@ public partial class EditorViewModel : ObservableObject
         }
 
         _dragStartPositions = null;
-
-        if (movedNodes.Count > 0)
-            AutoConnectRequested?.Invoke(movedNodes);
-    }
-
-    // ===== Auto-connect by proximity =====
-
-    public const double ProximityThreshold = 20.0;
-
-    public void AutoConnectByProximity(IEnumerable<NodeViewModel> movedNodes)
-    {
-        var draggedSet = new HashSet<NodeViewModel>(movedNodes);
-        if (draggedSet.Count == 0) return;
-
-        var newConnections = new List<(ConnectorViewModel src, ConnectorViewModel tgt)>();
-
-        foreach (var node in draggedSet)
-        {
-            foreach (var output in node.OutputConnectors)
-            {
-                if (output.OutputPort == null) continue;
-
-                ConnectorViewModel? bestMatch = null;
-                double bestDist = ProximityThreshold;
-
-                foreach (var otherNode in Nodes)
-                {
-                    if (draggedSet.Contains(otherNode)) continue;
-                    foreach (var input in otherNode.InputConnectors)
-                    {
-                        if (input.InputPort == null || input.InputPort.IsConnected) continue;
-                        if (!Connection.CanConnect(output.OutputPort, input.InputPort)) continue;
-
-                        var dist = Distance(output.Anchor, input.Anchor);
-                        if (dist < bestDist)
-                        {
-                            bestDist = dist;
-                            bestMatch = input;
-                        }
-                    }
-                }
-
-                if (bestMatch != null)
-                    newConnections.Add((output, bestMatch));
-            }
-        }
-
-        foreach (var node in draggedSet)
-        {
-            foreach (var input in node.InputConnectors)
-            {
-                if (input.InputPort == null || input.InputPort.IsConnected) continue;
-                if (newConnections.Any(c => c.tgt == input)) continue;
-
-                ConnectorViewModel? bestMatch = null;
-                double bestDist = ProximityThreshold;
-
-                foreach (var otherNode in Nodes)
-                {
-                    if (draggedSet.Contains(otherNode)) continue;
-                    foreach (var output in otherNode.OutputConnectors)
-                    {
-                        if (output.OutputPort == null) continue;
-                        if (!Connection.CanConnect(output.OutputPort, input.InputPort)) continue;
-
-                        var dist = Distance(output.Anchor, input.Anchor);
-                        if (dist < bestDist)
-                        {
-                            bestDist = dist;
-                            bestMatch = output;
-                        }
-                    }
-                }
-
-                if (bestMatch != null)
-                    newConnections.Add((bestMatch, input));
-            }
-        }
-
-        foreach (var (src, tgt) in newConnections)
-            TryConnect(src, tgt);
     }
 
     private static double Distance(Point a, Point b)
