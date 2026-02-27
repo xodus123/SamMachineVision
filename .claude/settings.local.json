@@ -33,7 +33,8 @@
       "Bash(xargs grep -l \"ReconstructGraph\\\\|GraphSerializer.ReconstructGraph\")",
       "Bash(xargs grep -l \"NodeRegistry\\\\|CreateNode\\\\|FunctionNode\")",
       "Bash(xargs grep -l \"class.*Engine\\\\|ExecutionEngine\")",
-      "Bash(xargs grep -l \"IsStreaming\")"
+      "Bash(xargs grep -l \"IsStreaming\")",
+      "Bash(wc -l /d/Work/CSharp/MVXTester/src/MVXTester.Core/Models/*.cs /d/Work/CSharp/MVXTester/src/MVXTester.Core/Engine/*.cs /d/Work/CSharp/MVXTester/src/MVXTester.Core/Serialization/*.cs)"
     ]
   }
 }

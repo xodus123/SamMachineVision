@@ -52,6 +52,58 @@ public interface INode
 public interface IStreamingSource { }
 
 /// <summary>
+/// Interface for loop control nodes (For, While, ForEach).
+/// When GraphExecutor encounters an ILoopNode, it repeatedly executes
+/// downstream "body" nodes instead of calling Process().
+/// Body nodes are identified by traversing downstream connections,
+/// stopping at ILoopCollector nodes (which act as loop boundaries).
+/// </summary>
+public interface ILoopNode
+{
+    /// <summary>Initialize loop state before first iteration.</summary>
+    void InitializeLoop();
+
+    /// <summary>
+    /// Advance to next iteration and update output ports.
+    /// Returns true if the iteration should execute, false if loop is complete.
+    /// </summary>
+    bool MoveNext();
+
+    /// <summary>Called after loop completes (all iterations or break).</summary>
+    void EndLoop();
+
+    /// <summary>Maximum allowed iterations (safety limit to prevent infinite loops).</summary>
+    int MaxIterations { get; }
+}
+
+/// <summary>
+/// Node that accumulates values across loop iterations.
+/// Acts as a loop body boundary — nodes downstream of a collector
+/// are NOT part of the loop body and execute only after the loop completes.
+/// </summary>
+public interface ILoopCollector
+{
+    /// <summary>Clear accumulated data before loop starts.</summary>
+    void ClearCollection();
+
+    /// <summary>Collect current input values (called after each iteration).</summary>
+    void CollectIteration();
+
+    /// <summary>Finalize output (e.g., convert list to array) after loop ends.</summary>
+    void FinalizeCollection();
+}
+
+/// <summary>
+/// Node that can signal early termination of a loop.
+/// GraphExecutor checks ShouldBreak after each iteration.
+/// </summary>
+public interface IBreakSignal
+{
+    bool ShouldBreak { get; }
+    void ResetBreak();
+}
+
+/// <summary>
 /// Interface for nodes that can receive mouse events from the execution output window.
 /// </summary>
 public interface IMouseEventReceiver

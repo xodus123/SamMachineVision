@@ -12,24 +12,7 @@ public class GraphExecutor
 
         var (nodes, conns) = graph.Snapshot();
         var order = TopologicalSort(nodes, conns);
-        foreach (var node in order)
-        {
-            if (cancellationToken.IsCancellationRequested) return;
-
-            if (forceAll || node.IsDirty)
-            {
-                try
-                {
-                    node.Error = null;
-                    node.Process();
-                    node.IsDirty = false;
-                }
-                catch (Exception ex)
-                {
-                    node.Error = ex.Message;
-                }
-            }
-        }
+        ExecuteNodes(order, forceAll, cancellationToken);
 
         sw.Stop();
         LastExecutionTime = sw.Elapsed;
@@ -48,17 +31,7 @@ public class GraphExecutor
         // Initial force execution
         var (nodes, conns) = graph.Snapshot();
         var order = TopologicalSort(nodes, conns);
-        foreach (var node in order)
-        {
-            if (cancellationToken.IsCancellationRequested) return;
-            try
-            {
-                node.Error = null;
-                node.Process();
-                node.IsDirty = false;
-            }
-            catch (Exception ex) { node.Error = ex.Message; }
-        }
+        ExecuteNodes(order, true, cancellationToken);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
         LastExecutionTime = sw.Elapsed;
@@ -85,21 +58,7 @@ public class GraphExecutor
                 }
             }
 
-            foreach (var node in order)
-            {
-                if (cancellationToken.IsCancellationRequested) return;
-
-                if (node.IsDirty)
-                {
-                    try
-                    {
-                        node.Error = null;
-                        node.Process();
-                        node.IsDirty = false;
-                    }
-                    catch (Exception ex) { node.Error = ex.Message; }
-                }
-            }
+            ExecuteNodes(order, false, cancellationToken);
 
             sw.Stop();
             LastExecutionTime = sw.Elapsed;
@@ -138,17 +97,7 @@ public class GraphExecutor
         var order = TopologicalSort(nodes, conns);
         var sw = System.Diagnostics.Stopwatch.StartNew();
 
-        foreach (var node in order)
-        {
-            if (cancellationToken.IsCancellationRequested) return;
-            try
-            {
-                node.Error = null;
-                node.Process();
-                node.IsDirty = false;
-            }
-            catch (Exception ex) { node.Error = ex.Message; }
-        }
+        ExecuteNodes(order, true, cancellationToken);
 
         sw.Stop();
         LastExecutionTime = sw.Elapsed;
@@ -190,21 +139,7 @@ public class GraphExecutor
             {
                 sw.Restart();
 
-                foreach (var node in order)
-                {
-                    if (cancellationToken.IsCancellationRequested) return;
-
-                    if (node.IsDirty)
-                    {
-                        try
-                        {
-                            node.Error = null;
-                            node.Process();
-                            node.IsDirty = false;
-                        }
-                        catch (Exception ex) { node.Error = ex.Message; }
-                    }
-                }
+                ExecuteNodes(order, false, cancellationToken);
 
                 sw.Stop();
                 LastExecutionTime = sw.Elapsed;
@@ -218,6 +153,201 @@ public class GraphExecutor
             }
         }
     }
+
+    #region Loop Execution Support
+
+    /// <summary>
+    /// Execute nodes in order with ILoopNode support.
+    /// When an ILoopNode is encountered, its downstream body nodes are
+    /// executed repeatedly instead of once.
+    /// </summary>
+    private void ExecuteNodes(IReadOnlyList<INode> order, bool forceAll, CancellationToken ct)
+    {
+        var processedSet = new HashSet<INode>();
+        ExecuteNodeList(order, forceAll, processedSet, ct);
+    }
+
+    /// <summary>
+    /// Execute a list of nodes, handling ILoopNode nodes specially.
+    /// </summary>
+    private void ExecuteNodeList(IReadOnlyList<INode> order, bool forceAll,
+        HashSet<INode> processedSet, CancellationToken ct)
+    {
+        for (int i = 0; i < order.Count; i++)
+        {
+            var node = order[i];
+            if (processedSet.Contains(node)) continue;
+            if (ct.IsCancellationRequested) return;
+
+            if (node is ILoopNode loopNode && (forceAll || node.IsDirty))
+            {
+                ExecuteLoop(loopNode, order, processedSet, ct);
+            }
+            else if (forceAll || node.IsDirty)
+            {
+                try
+                {
+                    node.Error = null;
+                    node.Process();
+                    node.IsDirty = false;
+                }
+                catch (Exception ex)
+                {
+                    node.Error = ex.Message;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Execute a loop node: initialize, iterate body, finalize.
+    /// Supports nested loops (body may contain other ILoopNode nodes).
+    /// </summary>
+    private void ExecuteLoop(ILoopNode loopNode, IReadOnlyList<INode> fullOrder,
+        HashSet<INode> outerProcessedSet, CancellationToken ct)
+    {
+        var loopAsNode = (INode)loopNode;
+
+        // Find body nodes (downstream, stopping at collectors)
+        var bodyNodes = FindLoopBody(loopAsNode, fullOrder);
+
+        // Find collectors and break signals in the body
+        var collectors = new List<ILoopCollector>();
+        var breakSignals = new List<IBreakSignal>();
+        foreach (var bn in bodyNodes)
+        {
+            if (bn is ILoopCollector coll) collectors.Add(coll);
+            if (bn is IBreakSignal brk) breakSignals.Add(brk);
+        }
+
+        // Clear collectors before loop
+        foreach (var c in collectors) c.ClearCollection();
+
+        // Initialize loop
+        loopAsNode.Error = null;
+        try
+        {
+            loopNode.InitializeLoop();
+        }
+        catch (Exception ex)
+        {
+            loopAsNode.Error = ex.Message;
+            loopAsNode.IsDirty = false;
+            outerProcessedSet.Add(loopAsNode);
+            foreach (var bn in bodyNodes) outerProcessedSet.Add(bn);
+            return;
+        }
+
+        // Iterate
+        int iteration = 0;
+        while (iteration < loopNode.MaxIterations)
+        {
+            if (ct.IsCancellationRequested) return;
+
+            bool hasNext;
+            try
+            {
+                hasNext = loopNode.MoveNext();
+            }
+            catch (Exception ex)
+            {
+                loopAsNode.Error = ex.Message;
+                break;
+            }
+
+            if (!hasNext) break;
+
+            // Reset break signals for this iteration
+            foreach (var bs in breakSignals) bs.ResetBreak();
+
+            // Execute body nodes (supports nested loops via recursion)
+            var bodyProcessed = new HashSet<INode>();
+            ExecuteNodeList(bodyNodes, true, bodyProcessed, ct);
+
+            // Collect iteration results
+            foreach (var c in collectors) c.CollectIteration();
+
+            // Check break signals
+            if (breakSignals.Any(bs => bs.ShouldBreak))
+                break;
+
+            iteration++;
+        }
+
+        // Finalize
+        try
+        {
+            loopNode.EndLoop();
+        }
+        catch (Exception ex)
+        {
+            loopAsNode.Error = ex.Message;
+        }
+
+        foreach (var c in collectors) c.FinalizeCollection();
+
+        // Mark all body nodes as processed so they're skipped in the outer traversal
+        loopAsNode.IsDirty = false;
+        outerProcessedSet.Add(loopAsNode);
+        foreach (var bn in bodyNodes)
+        {
+            bn.IsDirty = false;
+            outerProcessedSet.Add(bn);
+        }
+    }
+
+    /// <summary>
+    /// Find loop body nodes: all nodes downstream of the loop node,
+    /// stopping traversal at ILoopCollector nodes (collectors are included in the body).
+    /// Returns nodes in the same order as they appear in the full order list.
+    /// </summary>
+    private static List<INode> FindLoopBody(INode loopNode, IReadOnlyList<INode> order)
+    {
+        var body = new HashSet<INode>();
+        var visited = new HashSet<INode>();
+        var queue = new Queue<INode>();
+
+        // Start BFS from loop node's direct downstream connections
+        foreach (var output in loopNode.Outputs)
+        {
+            foreach (var conn in output.Connections)
+            {
+                var target = conn.Target.Owner;
+                if (visited.Add(target))
+                {
+                    body.Add(target);
+                    queue.Enqueue(target);
+                }
+            }
+        }
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+
+            // Stop traversal at collectors (they are a boundary)
+            if (current is ILoopCollector) continue;
+
+            foreach (var output in current.Outputs)
+            {
+                foreach (var conn in output.Connections)
+                {
+                    var target = conn.Target.Owner;
+                    if (visited.Add(target))
+                    {
+                        body.Add(target);
+                        queue.Enqueue(target);
+                    }
+                }
+            }
+        }
+
+        // Return body nodes in topological order (same order as the full order list)
+        var orderSet = new HashSet<INode>(order);
+        return order.Where(n => body.Contains(n) && orderSet.Contains(n)).ToList();
+    }
+
+    #endregion
 
     public static List<INode> TopologicalSort(IReadOnlyList<INode> nodes, IReadOnlyList<IConnection> connections)
     {

@@ -51,6 +51,8 @@ public partial class ConnectorViewModel : ObservableObject
             return new SolidColorBrush(Color.FromRgb(0xCB, 0xA6, 0xF7));
         if (DataType == typeof(string[]) || DataType == typeof(string[][]))
             return new SolidColorBrush(Color.FromRgb(0x94, 0xE2, 0xD5));
+        if (DataType == typeof(object) || DataType == typeof(object[]))
+            return new SolidColorBrush(Color.FromRgb(0xBA, 0xC2, 0xDE));
         return new SolidColorBrush(Color.FromRgb(0x93, 0x99, 0xB2));
     }
 
@@ -71,6 +73,8 @@ public partial class ConnectorViewModel : ObservableObject
         if (DataType == typeof(double[])) return "double[]";
         if (DataType == typeof(string[])) return "string[]";
         if (DataType == typeof(string[][])) return "string[][]";
+        if (DataType == typeof(object)) return "any";
+        if (DataType == typeof(object[])) return "any[]";
         return DataType.Name;
     }
 }
