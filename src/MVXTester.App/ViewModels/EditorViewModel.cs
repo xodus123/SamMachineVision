@@ -672,6 +672,9 @@ public partial class EditorViewModel : ObservableObject
         ConnectorViewModel? bestMatch = null;
         double bestDist = double.MaxValue;
 
+        // Use the clicked connector's node location as reference point.
+        var srcLoc = connector.Node.Location;
+
         foreach (var node in Nodes)
         {
             if (node == connector.Node) continue;
@@ -693,7 +696,9 @@ public partial class EditorViewModel : ObservableObject
                     && !output.OutputPort.DataType.IsAssignableFrom(input.InputPort.DataType))
                     continue;
 
-                var dist = Distance(connector.Anchor, candidate.Anchor);
+                // Use Node.Location (always accurate) instead of Anchor
+                // (which can be stale/zero for off-screen or not-yet-rendered nodes).
+                var dist = Distance(srcLoc, candidate.Node.Location);
                 if (dist < bestDist)
                 {
                     bestDist = dist;
