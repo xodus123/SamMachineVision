@@ -43,6 +43,14 @@ public partial class NodeViewModel : ObservableObject
             OutputConnectors.Add(new ConnectorViewModel(
                 output.Name, output.DataType, false, this, outputPort: output));
         }
+
+        ThemeManager.ThemeChanged += OnThemeChanged;
+    }
+
+    private void OnThemeChanged()
+    {
+        OnPropertyChanged(nameof(CategoryColor));
+        OnPropertyChanged(nameof(CategoryBorderColor));
     }
 
     public void UpdatePreview()
