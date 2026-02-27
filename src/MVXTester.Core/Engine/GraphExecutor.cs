@@ -38,16 +38,7 @@ public class GraphExecutor
         Action? onFrameComplete = null, int targetFps = 30)
     {
         var delay = TimeSpan.FromMilliseconds(1000.0 / targetFps);
-
-        foreach (var n in graph.Nodes) n.IsRuntimeMode = true;
-        try
-        {
         ExecuteContinuousCore(graph, cancellationToken, onFrameComplete, delay);
-        }
-        finally
-        {
-            foreach (var n in graph.Nodes) n.IsRuntimeMode = false;
-        }
     }
 
     private void ExecuteContinuousCore(NodeGraph graph, CancellationToken cancellationToken,
