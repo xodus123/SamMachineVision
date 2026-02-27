@@ -53,6 +53,27 @@ public partial class PropertyItem : ObservableObject
     public Type? EnumType => _property.EnumType;
 
     [ObservableProperty] private object? _value;
+
+    /// <summary>
+    /// Slider-friendly double property that converts to/from the actual Value (boxed int or double).
+    /// WPF Slider.Value is double, but PropertyItem.Value can be boxed int — direct binding breaks positioning.
+    /// </summary>
+    public double SliderValue
+    {
+        get
+        {
+            try { return Convert.ToDouble(Value ?? 0); }
+            catch { return 0.0; }
+        }
+        set
+        {
+            if (PropertyType == PropertyType.Integer)
+                Value = (int)Math.Round(value);
+            else
+                Value = value;
+        }
+    }
+
     [ObservableProperty] private ObservableCollection<DeviceOptionItem> _deviceOptions = new();
 
     public PropertyItem(NodeProperty property, Action onChanged,
@@ -102,6 +123,9 @@ public partial class PropertyItem : ObservableObject
 
     partial void OnValueChanged(object? value)
     {
+        // Keep slider in sync whenever Value changes (undo/redo, text box, etc.)
+        OnPropertyChanged(nameof(SliderValue));
+
         if (_suppressUndo)
         {
             _property.SetValue(value);
