@@ -565,6 +565,7 @@ public class HikCameraNode : BaseNode, IStreamingSource
             }
 
             var deviceInfo = Marshal.PtrToStructure(pDeviceInfo[deviceIndex], _deviceInfoType)!;
+            var nTLayerType = Convert.ToUInt32(_deviceInfoType.GetField("nTLayerType")?.GetValue(deviceInfo) ?? 0);
 
             // Create camera instance
             _camera = Activator.CreateInstance(_myCameraType);
@@ -592,15 +593,53 @@ public class HikCameraNode : BaseNode, IStreamingSource
                 ret = (int)(openMethod.Invoke(_camera, null) ?? -1);
                 if (ret != _mvOk)
                 {
+                    // 0x80000206 = MV_E_NETER (network error) — often subnet mismatch
+                    if (ret == unchecked((int)0x80000206) && nTLayerType == 0x1)
+                    {
+                        _destroyDevice?.Invoke(_camera, null);
+                        _camera = null;
+
+                        if (TryForceIpForSubnet(pDeviceInfo, deviceIndex))
+                        {
+                            // Re-enumerate after ForceIP and retry open
+                            EnumerateDevices();
+                            if (_cachedDeviceList != null && _deviceListType != null)
+                            {
+                                var pDI2 = _deviceListType.GetField("pDeviceInfo")?.GetValue(_cachedDeviceList) as IntPtr[];
+                                var n2 = Convert.ToUInt32(_deviceListType.GetField("nDeviceNum")?.GetValue(_cachedDeviceList) ?? 0);
+                                if (n2 > 0 && pDI2 != null && deviceIndex < pDI2.Length)
+                                {
+                                    var di2 = Marshal.PtrToStructure(pDI2[deviceIndex], _deviceInfoType!)!;
+                                    _camera = Activator.CreateInstance(_myCameraType);
+                                    CacheMethodReferences();
+                                    var cr2 = (int)(createMethod?.Invoke(_camera, new[] { di2 }) ?? -1);
+                                    if (cr2 == _mvOk)
+                                    {
+                                        ret = (int)(openMethod.Invoke(_camera, null) ?? -1);
+                                        if (ret == _mvOk) goto openSuccess;
+                                    }
+                                    _destroyDevice?.Invoke(_camera, null);
+                                    _camera = null;
+                                }
+                            }
+                            Error = "ForceIP applied but open still failed. Check firewall/NIC settings.";
+                        }
+                        else
+                        {
+                            Error = "Network error (0x80000206): Camera and NIC are on different subnets. ForceIP failed.";
+                        }
+                        return;
+                    }
+
                     Error = $"Open camera failed: 0x{ret:X8}";
                     _destroyDevice?.Invoke(_camera, null);
                     _camera = null;
                     return;
                 }
             }
+            openSuccess:
 
             // Set optimal packet size for GigE
-            var nTLayerType = Convert.ToUInt32(_deviceInfoType.GetField("nTLayerType")?.GetValue(deviceInfo) ?? 0);
             if (nTLayerType == 0x1 && _getOptimalPacketSize != null) // MV_GIGE_DEVICE
             {
                 int packetSize = (int)(_getOptimalPacketSize.Invoke(_camera, null) ?? 0);
@@ -678,6 +717,78 @@ public class HikCameraNode : BaseNode, IStreamingSource
             Error = $"Open camera failed: {ex.InnerException?.Message ?? ex.Message}";
             _isOpen = false;
         }
+    }
+
+    /// <summary>
+    /// For GigE cameras: detect subnet mismatch between camera IP and NIC IP,
+    /// then use MV_GIGE_ForceIpEx_NET to move the camera to the NIC's subnet.
+    /// Returns true if ForceIP succeeded.
+    /// </summary>
+    private bool TryForceIpForSubnet(IntPtr[] pDeviceInfo, int deviceIndex)
+    {
+        try
+        {
+            if (_deviceInfoType == null || _sdkAssembly == null) return false;
+
+            var gigeInfoType = _sdkAssembly.GetType("MvCamCtrl.NET.MyCamera+MV_GIGE_DEVICE_INFO");
+            if (gigeInfoType == null) return false;
+
+            // Read GigE device info from native pointer (SpecialInfo union at known offset)
+            int specOffset = (int)Marshal.OffsetOf(_deviceInfoType, "SpecialInfo");
+            IntPtr gigePtr = IntPtr.Add(pDeviceInfo[deviceIndex], specOffset);
+            var gigeInfo = Marshal.PtrToStructure(gigePtr, gigeInfoType)!;
+
+            uint camIp = Convert.ToUInt32(gigeInfoType.GetField("nCurrentIp")?.GetValue(gigeInfo) ?? 0);
+            uint camMask = Convert.ToUInt32(gigeInfoType.GetField("nCurrentSubNetMask")?.GetValue(gigeInfo) ?? 0);
+            uint nicIp = Convert.ToUInt32(gigeInfoType.GetField("nNetExport")?.GetValue(gigeInfo) ?? 0);
+
+            if (camIp == 0 || nicIp == 0 || camMask == 0) return false;
+            if ((camIp & camMask) == (nicIp & camMask)) return false; // already same subnet
+
+            // Calculate new camera IP: keep last octet from camera, use NIC's subnet
+            uint lastOctet = camIp & ~camMask;
+            if (lastOctet == 0 || lastOctet == (~camMask & 0xFFFFFFFF)) lastOctet = 100;
+            uint newCamIp = (nicIp & camMask) | lastOctet;
+            uint newGw = (nicIp & camMask) | 1;
+
+            // Create a temporary camera instance for ForceIP
+            var tempCam = Activator.CreateInstance(_myCameraType);
+            if (tempCam == null) return false;
+
+            var tempType = tempCam.GetType();
+            var createM = tempType.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .FirstOrDefault(m => m.Name == "MV_CC_CreateDevice_NET" && m.GetParameters().Length == 1);
+            if (createM == null) return false;
+
+            var devInfo = Marshal.PtrToStructure(pDeviceInfo[deviceIndex], _deviceInfoType)!;
+            int cr = (int)(createM.Invoke(tempCam, new[] { devInfo }) ?? -1);
+            if (cr != _mvOk) return false;
+
+            try
+            {
+                var forceM = tempType.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                    .FirstOrDefault(m => m.Name == "MV_GIGE_ForceIpEx_NET" && m.GetParameters().Length == 3);
+                if (forceM == null) return false;
+
+                int fr = (int)(forceM.Invoke(tempCam, new object[] { newCamIp, camMask, newGw }) ?? -1);
+                if (fr != _mvOk) return false;
+
+                // Wait for the camera to apply the new IP
+                Thread.Sleep(3000);
+                return true;
+            }
+            finally
+            {
+                try
+                {
+                    tempType.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                        .FirstOrDefault(m => m.Name == "MV_CC_DestroyDevice_NET" && m.GetParameters().Length == 0)
+                        ?.Invoke(tempCam, null);
+                }
+                catch { }
+            }
+        }
+        catch { return false; }
     }
 
     private void CloseCamera()
