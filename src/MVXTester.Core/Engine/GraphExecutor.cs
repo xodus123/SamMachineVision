@@ -110,8 +110,17 @@ public class GraphExecutor
     private void ExecuteRuntimeCore(NodeGraph graph, CancellationToken cancellationToken,
         Action? onFrameComplete, int pollIntervalMs)
     {
-        // Phase 1: Initial force execution of all nodes
+        // Phase 0: Start background nodes
         var (nodes, conns) = graph.Snapshot();
+        var backgroundNodes = nodes.OfType<IBackgroundNode>().ToList();
+        foreach (var bg in backgroundNodes)
+        {
+            try { bg.StartBackground(cancellationToken); } catch { }
+        }
+
+        try
+        {
+        // Phase 1: Initial force execution of all nodes
         var order = TopologicalSort(nodes, conns);
         var sw = System.Diagnostics.Stopwatch.StartNew();
 
@@ -167,7 +176,16 @@ public class GraphExecutor
             {
                 // Nothing dirty: sleep briefly to avoid busy-waiting
                 try { Task.Delay(pollIntervalMs, cancellationToken).Wait(); }
-                catch { return; }
+                catch { break; }
+            }
+        }
+        }
+        finally
+        {
+            // Stop background nodes
+            foreach (var bg in backgroundNodes)
+            {
+                try { bg.StopBackground(); } catch { }
             }
         }
     }
