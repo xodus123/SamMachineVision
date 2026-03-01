@@ -76,6 +76,13 @@ public static class MediaPipeHelper
     /// Preprocess Mat to NHWC float tensor [1, H, W, 3], RGB, normalized to [0,1].
     /// </summary>
     public static float[] PreprocessImageNHWC(Mat input, int width, int height)
+        => PreprocessImageNHWC(input, width, height, 1.0f / 255.0f, 0f);
+
+    /// <summary>
+    /// Preprocess Mat to NHWC float tensor with configurable normalization.
+    /// output = pixel * scale + offset.
+    /// </summary>
+    public static float[] PreprocessImageNHWC(Mat input, int width, int height, float scale, float offset)
     {
         using var resized = new Mat();
         Cv2.Resize(input, resized, new Size(width, height));
@@ -94,9 +101,9 @@ public static class MediaPipeHelper
             for (int x = 0; x < width; x++)
             {
                 var pixel = indexer[y, x];
-                data[idx++] = pixel.Item0 / 255.0f; // R
-                data[idx++] = pixel.Item1 / 255.0f; // G
-                data[idx++] = pixel.Item2 / 255.0f; // B
+                data[idx++] = pixel.Item0 * scale + offset; // R
+                data[idx++] = pixel.Item1 * scale + offset; // G
+                data[idx++] = pixel.Item2 * scale + offset; // B
             }
         }
         return data;
@@ -106,6 +113,14 @@ public static class MediaPipeHelper
     /// Preprocess Mat to NCHW float tensor [1, 3, H, W], RGB, normalized to [0,1].
     /// </summary>
     public static float[] PreprocessImageNCHW(Mat input, int width, int height)
+        => PreprocessImageNCHW(input, width, height, 1.0f / 255.0f, 0f);
+
+    /// <summary>
+    /// Preprocess Mat to NCHW float tensor with configurable normalization.
+    /// output = pixel * scale + offset.
+    /// [0,1]: scale=1/255, offset=0.  [-1,1]: scale=2/255, offset=-1.  [0,255]: scale=1, offset=0.
+    /// </summary>
+    public static float[] PreprocessImageNCHW(Mat input, int width, int height, float scale, float offset)
     {
         using var resized = new Mat();
         Cv2.Resize(input, resized, new Size(width, height));
@@ -124,9 +139,9 @@ public static class MediaPipeHelper
             for (int x = 0; x < width; x++)
             {
                 var pixel = indexer[y, x];
-                data[0 * height * width + y * width + x] = pixel.Item0 / 255.0f; // R
-                data[1 * height * width + y * width + x] = pixel.Item1 / 255.0f; // G
-                data[2 * height * width + y * width + x] = pixel.Item2 / 255.0f; // B
+                data[0 * height * width + y * width + x] = pixel.Item0 * scale + offset; // R
+                data[1 * height * width + y * width + x] = pixel.Item1 * scale + offset; // G
+                data[2 * height * width + y * width + x] = pixel.Item2 * scale + offset; // B
             }
         }
         return data;
