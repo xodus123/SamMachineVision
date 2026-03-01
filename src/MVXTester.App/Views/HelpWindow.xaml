@@ -4,6 +4,49 @@
         Title="MVXTester — Help" Width="900" Height="700"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BackgroundBrush}">
+
+    <!-- Help-specific styles (must be before content that references them) -->
+    <Window.Resources>
+        <Style x:Key="HelpH1" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+        <Style x:Key="HelpH2" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+            <Setter Property="Margin" Value="0,16,0,6" />
+        </Style>
+        <Style x:Key="HelpH3" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+            <Setter Property="Margin" Value="0,10,0,3" />
+        </Style>
+        <Style x:Key="HelpBody" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="LineHeight" Value="20" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="HelpKey" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Margin" Value="0,2" />
+        </Style>
+        <Style x:Key="HelpKeyDesc" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+            <Setter Property="Margin" Value="8,2,0,2" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
+
     <Grid Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -397,46 +440,4 @@ Function ............ Sub-graph reusable nodes (1)</TextBlock>
             </DockPanel>
         </Border>
     </Grid>
-
-    <!-- Help-specific styles -->
-    <Window.Resources>
-        <Style x:Key="HelpH1" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="20" />
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
-            <Setter Property="Margin" Value="0,0,0,12" />
-        </Style>
-        <Style x:Key="HelpH2" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
-            <Setter Property="Margin" Value="0,16,0,6" />
-        </Style>
-        <Style x:Key="HelpH3" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
-            <Setter Property="Margin" Value="0,10,0,3" />
-        </Style>
-        <Style x:Key="HelpBody" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12.5" />
-            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="LineHeight" Value="20" />
-            <Setter Property="Margin" Value="0,0,0,4" />
-        </Style>
-        <Style x:Key="HelpKey" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontFamily" Value="Consolas" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
-            <Setter Property="Margin" Value="0,2" />
-        </Style>
-        <Style x:Key="HelpKeyDesc" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
-            <Setter Property="Margin" Value="8,2,0,2" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-    </Window.Resources>
 </Window>
