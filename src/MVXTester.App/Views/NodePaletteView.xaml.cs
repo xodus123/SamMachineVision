@@ -22,6 +22,10 @@ public partial class NodePaletteView : UserControl
     {
         _dragStartPoint = e.GetPosition(null);
         _isDragging = false;
+
+        // Release any stale mouse capture that could block drag-drop
+        if (Mouse.Captured != null)
+            Mouse.Captured.ReleaseMouseCapture();
     }
 
     private void NodeItem_MouseMove(object sender, MouseEventArgs e)
@@ -38,26 +42,35 @@ public partial class NodePaletteView : UserControl
             if (sender is FrameworkElement fe && fe.DataContext is NodeRegistryEntry entry)
             {
                 _isDragging = true;
-
-                var data = new DataObject("NodeRegistryEntry", entry);
-
-                // Create ghost adorner on the top-level window
-                var window = Window.GetWindow(this);
-                var adornerLayer = window != null ? AdornerLayer.GetAdornerLayer(window.Content as UIElement) : null;
                 DragGhostAdorner? ghost = null;
+                AdornerLayer? adornerLayer = null;
 
-                if (adornerLayer != null && window?.Content is UIElement rootElement)
+                try
                 {
-                    ghost = new DragGhostAdorner(rootElement, entry.Name);
-                    adornerLayer.Add(ghost);
+                    var data = new DataObject("NodeRegistryEntry", entry);
+
+                    // Create ghost adorner on the top-level window
+                    var window = Window.GetWindow(this);
+                    adornerLayer = window != null ? AdornerLayer.GetAdornerLayer(window.Content as UIElement) : null;
+
+                    if (adornerLayer != null && window?.Content is UIElement rootElement)
+                    {
+                        ghost = new DragGhostAdorner(rootElement, entry.Name);
+                        adornerLayer.Add(ghost);
+                    }
+
+                    DragDrop.DoDragDrop(fe, data, DragDropEffects.Copy);
                 }
-
-                DragDrop.DoDragDrop(fe, data, DragDropEffects.Copy);
-
-                if (ghost != null && adornerLayer != null)
-                    adornerLayer.Remove(ghost);
-
-                _isDragging = false;
+                finally
+                {
+                    // Always cleanup: reset flag and remove adorner
+                    if (ghost != null)
+                    {
+                        ghost.Detach();
+                        try { adornerLayer?.Remove(ghost); } catch { }
+                    }
+                    _isDragging = false;
+                }
             }
         }
     }
@@ -125,6 +138,6 @@ public class DragGhostAdorner : Adorner
 
     public void Detach()
     {
-        AdornedElement.PreviewDragOver -= OnDragOver;
+        try { AdornedElement.PreviewDragOver -= OnDragOver; } catch { }
     }
 }

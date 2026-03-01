@@ -119,7 +119,9 @@ public class CameraNode : BaseNode, IStreamingSource, IDeviceEnumerable
 
         // Listen for device selection changes to update property visibility
         _deviceList.ValueChanged += UpdatePropertyVisibility;
-        UpdatePropertyVisibility();
+
+        // Auto-enumerate cameras on creation (same as USB/HIK/Cognex nodes)
+        EnumerateDevices();
     }
 
     /// <summary>

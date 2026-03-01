@@ -124,7 +124,10 @@ public class NodeRegistry
         NodeCategories.Data => 17,
         NodeCategories.Event => 18,
         NodeCategories.Script => 19,
-        NodeCategories.Function => 20,
+        NodeCategories.Inspection => 20,
+        NodeCategories.Measurement => 21,
+        NodeCategories.MediaPipe => 22,
+        NodeCategories.Function => 23,
         _ => 99
     };
 }

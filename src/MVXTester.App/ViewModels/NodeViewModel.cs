@@ -16,6 +16,7 @@ public partial class NodeViewModel : ObservableObject
 {
     [ObservableProperty] private System.Windows.Point _location;
     [ObservableProperty] private WriteableBitmap? _previewImage;
+    [ObservableProperty] private string? _previewText;
     [ObservableProperty] private string? _errorMessage;
     [ObservableProperty] private bool _isSelected;
     [ObservableProperty] private System.Windows.Size _desiredSize;
@@ -68,6 +69,9 @@ public partial class NodeViewModel : ObservableObject
     public void UpdatePreview()
     {
         ErrorMessage = Model.Error;
+
+        // Text-based preview (for Print node etc.)
+        PreviewText = Model.PreviewText;
 
         try
         {
@@ -138,6 +142,7 @@ public static class CategoryColorHelper
         [NodeCategories.Data]         = Frozen(0x94, 0xE2, 0xD5),
         [NodeCategories.Event]        = Frozen(0xF5, 0xC2, 0xE7),
         [NodeCategories.Script]       = Frozen(0xF2, 0xCD, 0xCD),
+        [NodeCategories.MediaPipe]    = Frozen(0xB4, 0x7E, 0xF5),
         [NodeCategories.Function]     = Frozen(0xFF, 0xCF, 0x48),
     };
 

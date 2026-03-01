@@ -41,6 +41,7 @@ public interface INode
     bool IsRuntimeMode { get; set; }
     string? Error { get; set; }
     Mat? PreviewMat { get; }
+    string? PreviewText { get; }
     Mat? ClonePreview();
     void Process();
 }

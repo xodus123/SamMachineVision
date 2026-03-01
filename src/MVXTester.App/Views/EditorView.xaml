@@ -37,7 +37,8 @@
                          DisableAutoPanning="False"
                          AllowDrop="True"
                          Drop="Editor_Drop"
-                         DragOver="Editor_DragOver">
+                         DragOver="Editor_DragOver"
+                         PreviewDragOver="Editor_DragOver">
 
         <nodify:NodifyEditor.PendingConnectionTemplate>
             <DataTemplate DataType="{x:Type vm:PendingConnectionViewModel}">
@@ -69,6 +70,18 @@
                                        MaxWidth="160" MaxHeight="120"
                                        Stretch="Uniform" Margin="4"
                                        Visibility="{Binding PreviewImage, Converter={StaticResource NullToVis}}" />
+                                <!-- Text-based preview (Print node etc.) -->
+                                <Border Background="{DynamicResource SurfaceHoverBrush}" CornerRadius="3" Padding="6,4" Margin="4,2,4,4"
+                                        MaxWidth="240" MaxHeight="200"
+                                        Visibility="{Binding PreviewText, Converter={StaticResource StringNotEmptyToVis}}">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                                  MaxHeight="192">
+                                        <TextBlock Text="{Binding PreviewText}" FontSize="10.5"
+                                                   FontFamily="Consolas, Courier New, monospace"
+                                                   Foreground="{DynamicResource ForegroundBrush}"
+                                                   TextWrapping="Wrap" />
+                                    </ScrollViewer>
+                                </Border>
                                 <Border Background="{DynamicResource ErrorHintBrush}" CornerRadius="2" Padding="4,2" Margin="4,0,4,4"
                                         Visibility="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyToVis}}">
                                     <TextBlock Text="{Binding ErrorMessage}" FontSize="10"

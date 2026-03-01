@@ -33,6 +33,7 @@ public abstract class BaseNode : INode
     public bool IsRuntimeMode { get; set; }
     public string? Error { get; set; }
     public Mat? PreviewMat { get; protected set; }
+    public string? PreviewText { get; protected set; }
     public readonly object PreviewLock = new();
 
     protected BaseNode()
@@ -145,6 +146,18 @@ public abstract class BaseNode : INode
             else
                 PreviewMat = null;
             try { old?.Dispose(); } catch { }
+        }
+    }
+
+    /// <summary>
+    /// Set text-based preview (displayed as WPF TextBlock in node footer).
+    /// Use instead of SetPreview(Mat) for text-oriented nodes like Print.
+    /// </summary>
+    protected void SetTextPreview(string? text)
+    {
+        lock (PreviewLock)
+        {
+            PreviewText = text;
         }
     }
 

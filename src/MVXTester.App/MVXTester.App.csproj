@@ -22,4 +22,11 @@
     <ProjectReference Include="..\MVXTester.Nodes\MVXTester.Nodes.csproj" />
   </ItemGroup>
 
+  <!-- MediaPipe ONNX models: copy to output Models/MediaPipe/ -->
+  <ItemGroup>
+    <None Include="..\..\Models\MediaPipe\*.onnx" Link="Models\MediaPipe\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
