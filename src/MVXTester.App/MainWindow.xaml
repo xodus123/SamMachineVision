@@ -31,6 +31,7 @@
         <KeyBinding Key="Y" Modifiers="Ctrl" Command="{Binding Editor.RedoCommand}" />
         <KeyBinding Key="Z" Modifiers="Ctrl+Shift" Command="{Binding Editor.RedoCommand}" />
         <KeyBinding Key="A" Modifiers="Ctrl" Command="{Binding Editor.SelectAllCommand}" />
+        <KeyBinding Key="F1" Command="{Binding ShowHelpCommand}" />
     </Window.InputBindings>
 
     <Grid>
@@ -78,6 +79,9 @@
                               VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                    <Button Content="?" Command="{Binding ShowHelpCommand}"
+                            Margin="2" ToolTip="Help (F1)"
+                            FontSize="14" FontWeight="Bold" Padding="8,2" />
                     <Button Content="{Binding ThemeIcon}" Command="{Binding ToggleThemeCommand}"
                             Margin="2" ToolTip="Toggle Dark/Light Theme"
                             FontSize="14" Padding="6,2" />

@@ -1,0 +1,442 @@
+<Window x:Class="MVXTester.App.Views.HelpWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MVXTester — Help" Width="900" Height="700"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BackgroundBrush}">
+    <Grid Margin="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                Padding="16,12">
+            <StackPanel>
+                <TextBlock Text="MVXTester" FontWeight="Bold" FontSize="22"
+                           Foreground="{DynamicResource ForegroundBrush}" />
+                <TextBlock Text="Node-Based Visual Programming for Computer Vision"
+                           FontSize="12" Foreground="{DynamicResource ForegroundDimBrush}" Margin="0,2,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- Tab Content -->
+        <TabControl Grid.Row="1" Margin="0" Padding="0" BorderThickness="0">
+
+            <!-- ═══ Tab 1: Usage ═══ -->
+            <TabItem Header="  Usage  " Padding="8,4">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,16">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HelpH1}">Basic Usage</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">MVXTester is a node-based visual programming environment for building computer vision pipelines. Connect nodes to create image processing workflows without writing code.</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Getting Started</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">1. Drag a node from the Node Palette (left panel) onto the canvas
+2. Connect nodes by dragging from an output port (right) to an input port (left)
+3. Configure node parameters in the Properties panel (right)
+4. Press F5 to execute or enable Auto Execute</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Execution Modes</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>▶ Execute (F5)</Bold> — Runtime mode. Runs continuously, re-executing only when nodes become dirty (properties change, inputs update). Ideal for interactive parameter tuning.
+
+<Bold>Force Execute (Ctrl+F5)</Bold> — Single-shot execution. Forces all nodes to re-process regardless of dirty state.
+
+<Bold>Stream (F6)</Bold> — Continuous streaming mode. Runs at maximum FPS, re-executing every frame. Used for live camera feeds and real-time processing.
+
+<Bold>Auto Execute</Bold> — When checked, automatically re-executes the graph when any property changes (with 150ms debounce).</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Keyboard Shortcuts</TextBlock>
+                        <Grid Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                                <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                                <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                                <RowDefinition /><RowDefinition />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource HelpKey}">Ctrl+N</TextBlock>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">New Graph</TextBlock>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource HelpKey}">Ctrl+O</TextBlock>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">Open Project</TextBlock>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource HelpKey}">Ctrl+S</TextBlock>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">Save</TextBlock>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource HelpKey}">Ctrl+Shift+S</TextBlock>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">Save As</TextBlock>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource HelpKey}">F5</TextBlock>
+                            <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">Execute / Stop Runtime</TextBlock>
+                            <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource HelpKey}">Ctrl+F5</TextBlock>
+                            <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">Force Execute (all nodes)</TextBlock>
+                            <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource HelpKey}">F6</TextBlock>
+                            <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">Toggle Streaming</TextBlock>
+                            <TextBlock Grid.Row="7" Grid.Column="0" Style="{StaticResource HelpKey}">Escape</TextBlock>
+                            <TextBlock Grid.Row="7" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">Cancel Execution</TextBlock>
+                            <TextBlock Grid.Row="8" Grid.Column="0" Style="{StaticResource HelpKey}">Delete</TextBlock>
+                            <TextBlock Grid.Row="8" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">Delete Selected Nodes</TextBlock>
+                            <TextBlock Grid.Row="9" Grid.Column="0" Style="{StaticResource HelpKey}">Ctrl+Z / Ctrl+Y</TextBlock>
+                            <TextBlock Grid.Row="9" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">Undo / Redo</TextBlock>
+                            <TextBlock Grid.Row="10" Grid.Column="0" Style="{StaticResource HelpKey}">Ctrl+C / Ctrl+V</TextBlock>
+                            <TextBlock Grid.Row="10" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">Copy / Paste Nodes</TextBlock>
+                            <TextBlock Grid.Row="11" Grid.Column="0" Style="{StaticResource HelpKey}">Ctrl+D</TextBlock>
+                            <TextBlock Grid.Row="11" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">Duplicate Selected</TextBlock>
+                            <TextBlock Grid.Row="12" Grid.Column="0" Style="{StaticResource HelpKey}">Ctrl+A</TextBlock>
+                            <TextBlock Grid.Row="12" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">Select All</TextBlock>
+                            <TextBlock Grid.Row="13" Grid.Column="0" Style="{StaticResource HelpKey}">Double-Click Node</TextBlock>
+                            <TextBlock Grid.Row="13" Grid.Column="1" Style="{StaticResource HelpKeyDesc}">Open file picker (Image/Video nodes) or Function detail</TextBlock>
+                        </Grid>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Node Connections</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">• Each input port accepts only one connection (previous connection is replaced)
+• Output ports can connect to multiple input ports
+• Connections enforce type compatibility (e.g., Mat to Mat, int to int)
+• Cycles are automatically detected and prevented
+• Data flows left to right: Output → Input (pull-based)</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Saving Projects</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>.mvxp</Bold> — Project archive (ZIP). Includes graph JSON + referenced image/video files. Recommended format for sharing.
+<Bold>.mvx</Bold> — Legacy JSON format. Graph only, no embedded files.</TextBlock>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ═══ Tab 2: Tutorial ═══ -->
+            <TabItem Header="  Tutorial  " Padding="8,4">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,16">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HelpH1}">Tutorials</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 1: Basic Image Processing</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Load an image, convert to grayscale, apply blur, detect edges.
+
+Step 1: Add an "Image Read" node from Input/Output category
+Step 2: Double-click the node to select an image file
+Step 3: Add a "Convert Color" node (Color category), set Code = BGR2GRAY
+Step 4: Connect Image Read → Convert Color (Image port)
+Step 5: Add a "Gaussian Blur" node (Filter), set KernelW/H = 5
+Step 6: Connect Convert Color → Gaussian Blur
+Step 7: Add a "Canny" node (Edge Detection), set Threshold1=100, Threshold2=200
+Step 8: Connect Gaussian Blur → Canny
+Step 9: Press F5 to execute — see edge detection result in preview</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 2: Object Detection with Contours</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Find and count objects in a binary image.
+
+Step 1: Image Read → Convert Color (BGR2GRAY) → Threshold (Thresh=128)
+Step 2: Add "Find Contours" node (Contour category)
+Step 3: Connect Threshold → Find Contours
+Step 4: Add "Filter Contours" node, set MinArea=500 to remove noise
+Step 5: Connect Find Contours → Filter Contours
+Step 6: Add "Draw Contours" node, connect original image + filtered contours
+Step 7: The Count output tells you how many objects were found
+Step 8: Use "Contour Centers" to get centroids of each object</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 3: Live Camera Processing</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Process live camera feed in real-time.
+
+Step 1: Add a "USB Camera" node (or "HIK Camera" for industrial cameras)
+Step 2: Connect to processing nodes (blur, threshold, etc.)
+Step 3: Press F6 (Stream) to start continuous capture
+Step 4: Adjust parameters in real-time — results update live
+Step 5: Press F6 again to stop streaming</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 4: Template Matching</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Find a template pattern in a larger image.
+
+Step 1: Add two "Image Read" nodes — one for the scene, one for the template
+Step 2: Add "Template Match" node (Detection category)
+Step 3: Connect scene → Image input, template → Template input
+Step 4: Set Method = CCoeffNormed for best results
+Step 5: Output: Location (best match position) and Score (confidence 0~1)
+Step 6: For multiple matches, use "Template Match Multi" with Threshold=0.8</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 5: Using Control Flow (Loops)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Process multiple images with the same pipeline using For loop.
+
+Step 1: Add a "For" node (Control category), set Start=0, End=5, Step=1
+Step 2: Inside the loop body, add processing nodes
+Step 3: Use the Index output to vary parameters per iteration
+Step 4: Add a "Collect" node at the end to gather results into a list
+Step 5: The loop executes body nodes repeatedly for each index value
+Step 6: Use "Break If" node to exit early based on a condition</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 6: Creating Reusable Functions</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Package a processing pipeline as a reusable function node.
+
+Step 1: Build your pipeline in a new graph (e.g., blur → threshold → contours)
+Step 2: Save as a .mvxp project file
+Step 3: In another graph, click "Import Function" in the toolbar
+Step 4: Select the saved .mvxp file
+Step 5: A new function node appears in the palette with auto-detected ports
+Step 6: Source nodes (no inputs) become function parameters
+Step 7: Sink nodes (no outputs) become function return values
+Step 8: Double-click the function node to view its internal structure</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Tutorial 7: Industrial Inspection</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve">Goal: Detect defects by comparing against a reference image.
+
+Step 1: Add two "Image Read" nodes — Reference (golden sample) and Test image
+Step 2: Add "Defect Detector" node (Inspection category)
+Step 3: Connect Reference and Test images
+Step 4: Adjust Threshold and MinDefectArea to filter noise
+Step 5: Outputs: DiffMask (binary diff), Defects (bounding rects), Count
+Step 6: Enable ShowOverlay to visualize defects on the original image</TextBlock>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ═══ Tab 3: Program Structure ═══ -->
+            <TabItem Header="  Program Structure  " Padding="8,4">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,16">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HelpH1}">Program Structure</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Architecture Overview</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve" FontFamily="Consolas" FontSize="11.5">┌───────────────────────────────────────────────┐
+│  UI Layer (WPF + Nodify)                      │
+│  MainWindow, EditorView, PropertyEditorView   │
+│  NodePaletteView, CodePreviewDialog           │
+├───────────────────────────────────────────────┤
+│  ViewModel Layer (CommunityToolkit.Mvvm)      │
+│  MainViewModel, EditorViewModel               │
+│  NodePaletteViewModel, PropertyEditorViewModel│
+├───────────────────────────────────────────────┤
+│  Core Engine (MVXTester.Core)                 │
+│  BaseNode, NodeGraph, GraphExecutor           │
+│  Ports, Connections, NodeProperty             │
+│  GraphSerializer, SubGraphAnalyzer            │
+├───────────────────────────────────────────────┤
+│  Node Library (MVXTester.Nodes)               │
+│  120+ nodes across 22 categories              │
+│  OpenCvSharp-based image processing           │
+└───────────────────────────────────────────────┘</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Project Structure</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve" FontFamily="Consolas" FontSize="11.5">MVXTester/
+├── src/
+│   ├── MVXTester.Core/          Core engine (UI-independent)
+│   │   ├── Models/
+│   │   │   ├── BaseNode.cs      Abstract base for all nodes
+│   │   │   ├── INode.cs         Interfaces, NodeProperty, Port types
+│   │   │   ├── NodeGraph.cs     Graph container (nodes + connections)
+│   │   │   └── FunctionNode.cs  Sub-graph function node
+│   │   ├── Engine/
+│   │   │   └── GraphExecutor.cs Execution engine (topo-sort, loops)
+│   │   ├── Serialization/
+│   │   │   ├── GraphSerializer.cs  JSON serialization
+│   │   │   ├── ProjectArchive.cs   ZIP archive (.mvxp)
+│   │   │   └── SubGraphAnalyzer.cs Boundary port analysis
+│   │   └── Registry/
+│   │       └── NodeRegistry.cs  Dynamic node type registration
+│   │
+│   ├── MVXTester.Nodes/         Node implementations
+│   │   ├── Arithmetic/          11 nodes (Add, Subtract, Bitwise...)
+│   │   ├── Color/               4 nodes (CvtColor, InRange...)
+│   │   ├── Contour/             13 nodes (FindContours, Area...)
+│   │   ├── Control/             11 nodes (For, While, Switch...)
+│   │   ├── Data/                7 nodes (CSV, String ops...)
+│   │   ├── Detection/           9 nodes (Template, Hough...)
+│   │   ├── Drawing/             10 nodes (Circle, Rect, Text...)
+│   │   ├── Edge/                4 nodes (Canny, Sobel...)
+│   │   ├── Feature/             8 nodes (SIFT, ORB, Harris...)
+│   │   ├── Filter/              10 nodes (Gaussian, Median...)
+│   │   ├── Histogram/           4 nodes (CLAHE, Equalize...)
+│   │   ├── Input/               7 nodes (Camera, ImageRead...)
+│   │   ├── Inspection/          13 nodes (Defect, Pattern...)
+│   │   ├── Measurement/         3 nodes (Distance, Angle...)
+│   │   ├── Morphology/          3 nodes (Erode, Dilate...)
+│   │   ├── Script/              1 node (PythonScript)
+│   │   ├── Segmentation/        3 nodes (Watershed, GrabCut...)
+│   │   ├── Threshold/           3 nodes (Fixed, Adaptive, Otsu)
+│   │   ├── Transform/           8 nodes (Resize, Rotate, Warp...)
+│   │   └── Value/               14 nodes (Int, String, Math...)
+│   │
+│   └── MVXTester.App/           WPF application
+│       ├── ViewModels/          MVVM ViewModels
+│       ├── Views/               XAML views
+│       ├── Themes/              Dark/Light theme resources
+│       └── Services/            Theme, code generation</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Core Concepts</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH3}">BaseNode</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">Every node inherits from BaseNode. It defines Setup() (ports and properties) and Process() (main logic). Nodes have typed input/output ports and configurable properties.</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH3}">NodeGraph</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">The graph container manages nodes and connections. It enforces connection rules (type compatibility, cycle prevention), tracks dirty state, and provides thread-safe snapshots for execution.</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH3}">GraphExecutor</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">The execution engine. Uses Kahn's algorithm for topological sorting. Supports three modes: single-shot, continuous streaming (camera), and runtime (event-driven, dirty-node-only). Handles loop execution (For, While, ForEach) with nested loop support.</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH3}">Data Flow</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">Pull-based data flow. InputPort.GetValue() follows the connection to the source OutputPort. Nodes are executed in topological order. Only dirty nodes are re-executed in runtime mode (incremental execution).</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH3}">FunctionNode</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}">Loads a saved project (.mvxp) as a reusable sub-graph. SubGraphAnalyzer identifies boundary ports: source nodes (in-degree 0) become inputs, sink nodes (out-degree 0) become outputs. Executes the sub-graph internally with its own GraphExecutor.</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Node Categories (22)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve" FontFamily="Consolas" FontSize="11.5">Input/Output ........ Image/Video I/O, Cameras (7)
+Color ............... Color space conversion (4)
+Filter .............. Blur, sharpen, denoise (10)
+Edge Detection ...... Canny, Sobel, Laplacian (4)
+Morphology .......... Erode, dilate, open/close (3)
+Threshold ........... Fixed, adaptive, Otsu (3)
+Contour ............. Find, filter, analyze contours (13)
+Feature Detection ... SIFT, ORB, Harris, FAST (8)
+Drawing ............. Shapes, text, grid overlay (10)
+Transform ........... Crop, resize, rotate, warp (8)
+Histogram ........... CLAHE, equalize, backproject (4)
+Arithmetic .......... Image math, bitwise ops (11)
+Detection ........... Template match, Hough (9)
+Segmentation ........ Watershed, GrabCut (3)
+Value ............... Constants, math, compare (14)
+Control ............. Loops, switch, boolean logic (11)
+Data Processing ..... CSV, string operations (7)
+Communication ....... TCP, Serial port (3)
+Event ............... Keyboard, mouse events (3)
+Script .............. Python script execution (1)
+Inspection .......... High-level industrial checks (13)
+Measurement ......... Distance, angle, dimensions (3)
+Function ............ Sub-graph reusable nodes (1)</TextBlock>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ═══ Tab 4: Tech Stack ═══ -->
+            <TabItem Header="  Tech Stack  " Padding="8,4">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,16">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource HelpH1}">Technology Stack</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Runtime</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>.NET 8.0</Bold> — Modern cross-platform runtime (Windows-only for WPF UI)
+<Bold>C# 12</Bold> — Primary language with latest features (primary constructors, collection expressions)
+<Bold>WPF</Bold> — Windows Presentation Foundation for desktop UI
+<Bold>MVVM</Bold> — Model-View-ViewModel pattern via CommunityToolkit.Mvvm 8.x</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Computer Vision</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>OpenCvSharp4 (4.10.x)</Bold> — .NET wrapper for OpenCV
+  - Core image types: Mat, Point, Rect, Scalar, Size
+  - Full OpenCV API: filters, edge detection, contours, feature detection
+  - Image I/O: imread/imwrite, VideoCapture
+  - Bayer pattern demosaicing for industrial cameras</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Node Editor</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>Nodify 7.x</Bold> — WPF node editor library
+  - NodifyEditor: main canvas with pan/zoom
+  - Node, Connector: draggable node UI elements
+  - PendingConnection: visual wire while dragging
+  - Minimap, grid background, grouping support</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">MVVM Framework</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>CommunityToolkit.Mvvm 8.x</Bold>
+  - [ObservableProperty] — auto-generates INotifyPropertyChanged
+  - [RelayCommand] — auto-generates ICommand implementations
+  - ObservableObject — base class for ViewModels
+  - Source generators for boilerplate elimination</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Serialization</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>System.Text.Json</Bold> — High-performance JSON serialization
+  - camelCase naming policy
+  - JsonElement for dynamic property deserialization
+  - Supports both .mvx (plain JSON) and .mvxp (ZIP archive) formats
+
+<Bold>System.IO.Compression</Bold> — ZIP archive support for .mvxp project files
+  - Bundles graph JSON + referenced image/video assets</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Camera SDKs (Dynamic Loading)</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>HIKROBOT MVS SDK</Bold> — MvCameraControl.Net.dll
+  - GigE Vision and USB3 Vision industrial cameras
+  - Dynamic assembly loading via reflection (no compile-time dependency)
+  - Supports auto ForceIP for subnet mismatch resolution
+
+<Bold>Cognex VisionPro 9.x SDK</Bold> — Cognex.Vision.*.dll
+  - GigE Vision cameras (CIC series)
+  - Two-phase SDK loading: assemblies-only for enumeration, full init for acquisition
+  - Requires VisionPro license for frame acquisition</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Execution Engine</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>GraphExecutor</Bold> — Custom execution engine
+  - Kahn's algorithm for topological sorting
+  - Dirty-flag incremental execution
+  - Loop execution: For, While, ForEach with break support
+  - Thread-safe graph snapshots
+  - Three modes: single-shot, continuous streaming, event-driven runtime</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Code Generation</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>Python Code Generator</Bold> — Converts graph to standalone Python/OpenCV script
+<Bold>C# Code Generator</Bold> — Converts graph to standalone C#/OpenCvSharp code
+  - Both generators follow topological order
+  - Variable naming based on node names</TextBlock>
+
+                        <TextBlock Style="{StaticResource HelpH2}">Build System</TextBlock>
+                        <TextBlock Style="{StaticResource HelpBody}" xml:space="preserve"><Bold>MSBuild / dotnet CLI</Bold>
+  - Multi-project solution: Core, Nodes, App
+  - Core and Nodes are class libraries (UI-independent)
+  - App is the WPF executable
+  - NuGet package management</TextBlock>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                Padding="16,8">
+            <DockPanel>
+                <Button Content="Close" Click="CloseClick" DockPanel.Dock="Right"
+                        Padding="20,6" HorizontalAlignment="Right" />
+                <TextBlock Text="MVXTester — 120+ nodes, 22 categories"
+                           Foreground="{DynamicResource ForegroundDimBrush}"
+                           VerticalAlignment="Center" FontSize="11" />
+            </DockPanel>
+        </Border>
+    </Grid>
+
+    <!-- Help-specific styles -->
+    <Window.Resources>
+        <Style x:Key="HelpH1" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+        <Style x:Key="HelpH2" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+            <Setter Property="Margin" Value="0,16,0,6" />
+        </Style>
+        <Style x:Key="HelpH3" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+            <Setter Property="Margin" Value="0,10,0,3" />
+        </Style>
+        <Style x:Key="HelpBody" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="LineHeight" Value="20" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="HelpKey" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Margin" Value="0,2" />
+        </Style>
+        <Style x:Key="HelpKeyDesc" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+            <Setter Property="Margin" Value="8,2,0,2" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
+</Window>

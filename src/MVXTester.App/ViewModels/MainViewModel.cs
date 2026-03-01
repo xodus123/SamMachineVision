@@ -545,6 +545,16 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ShowHelp()
+    {
+        var helpWindow = new HelpWindow
+        {
+            Owner = Application.Current.MainWindow
+        };
+        helpWindow.ShowDialog();
+    }
+
+    [RelayCommand]
     private void ImportFunction()
     {
         var dialog = new OpenFileDialog
