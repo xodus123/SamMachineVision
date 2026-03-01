@@ -129,7 +129,8 @@ public class NodeRegistry
         NodeCategories.MediaPipe => 22,
         NodeCategories.YOLO => 23,
         NodeCategories.OCR => 24,
-        NodeCategories.Function => 25,
+        NodeCategories.AI => 25,
+        NodeCategories.Function => 26,
         _ => 99
     };
 }

@@ -9,18 +9,7 @@ public class ImageShowNode : BaseNode
 {
     private InputPort<Mat> _imageInput = null!;
     private NodeProperty _windowName = null!;
-
-    // Dedicated display thread for OpenCV HighGUI
-    // (ImShow/WaitKey/SetMouseCallback must all run on the same thread)
-    private Thread? _displayThread;
-    private volatile bool _threadRunning;
-    private Mat? _pendingImage;
-    private readonly object _imageLock = new();
     private string _activeWindowName = "Image";
-
-    // Must keep a strong reference to prevent GC from collecting the delegate
-    // passed to native OpenCV via P/Invoke (Cv2.SetMouseCallback)
-    private MouseCallback? _mouseCallbackDelegate;
 
     protected override void Setup()
     {
@@ -42,15 +31,12 @@ public class ImageShowNode : BaseNode
             // Only show OpenCV window in runtime mode (F5 Execute)
             if (IsRuntimeMode)
             {
-                // Start dedicated display thread if not running
-                EnsureDisplayThread();
+                _activeWindowName = _windowName.GetValue<string>();
+                if (string.IsNullOrWhiteSpace(_activeWindowName))
+                    _activeWindowName = "Image";
 
-                // Queue image for display on the dedicated thread
-                lock (_imageLock)
-                {
-                    _pendingImage?.Dispose();
-                    _pendingImage = image.Clone();
-                }
+                // Delegate to shared display manager (single HighGUI thread for all windows)
+                ImageShowManager.ShowImage(_activeWindowName, image, OnOpenCvMouseCallback);
             }
 
             SetPreview(image);
@@ -62,100 +48,8 @@ public class ImageShowNode : BaseNode
         }
     }
 
-    private void EnsureDisplayThread()
-    {
-        if (_displayThread != null && _threadRunning) return;
-
-        _activeWindowName = _windowName.GetValue<string>();
-        if (string.IsNullOrWhiteSpace(_activeWindowName))
-            _activeWindowName = "Image";
-
-        _threadRunning = true;
-        _displayThread = new Thread(DisplayLoop)
-        {
-            IsBackground = true,
-            Name = $"ImageShow_{_activeWindowName}"
-        };
-        _displayThread.Start();
-    }
-
     /// <summary>
-    /// Dedicated thread loop for OpenCV HighGUI operations.
-    /// ImShow, WaitKey, and SetMouseCallback all run on this single thread.
-    /// Mouse/keyboard events are published to RuntimeEventBus for Event nodes to consume.
-    /// </summary>
-    private void DisplayLoop()
-    {
-        var windowName = _activeWindowName;
-        bool windowCreated = false;
-        bool callbackRegistered = false;
-
-        try
-        {
-            while (_threadRunning)
-            {
-                Mat? imageToShow = null;
-                lock (_imageLock)
-                {
-                    if (_pendingImage != null)
-                    {
-                        imageToShow = _pendingImage;
-                        _pendingImage = null;
-                    }
-                }
-
-                if (imageToShow != null)
-                {
-                    Cv2.ImShow(windowName, imageToShow);
-                    windowCreated = true;
-                    if (!callbackRegistered)
-                    {
-                        // Store delegate in field to prevent GC collection
-                        _mouseCallbackDelegate = OnOpenCvMouseCallback;
-                        Cv2.SetMouseCallback(windowName, _mouseCallbackDelegate);
-                        callbackRegistered = true;
-                    }
-                    imageToShow.Dispose();
-                }
-
-                if (windowCreated)
-                {
-                    // Process window messages - WaitKey MUST run on the same thread as ImShow
-                    try
-                    {
-                        var key = Cv2.WaitKey(1);
-                        if (key >= 0)
-                        {
-                            // Publish keyboard event to RuntimeEventBus → KeyboardEventNode
-                            RuntimeEventBus.RaiseKeyEvent(key);
-                        }
-                    }
-                    catch
-                    {
-                        // Window may have been closed by user
-                        windowCreated = false;
-                        callbackRegistered = false;
-                    }
-                }
-                else
-                {
-                    // No window yet, avoid busy-waiting
-                    Thread.Sleep(16);
-                }
-            }
-        }
-        catch { }
-        finally
-        {
-            if (windowCreated)
-            {
-                try { Cv2.DestroyWindow(windowName); } catch { }
-            }
-        }
-    }
-
-    /// <summary>
-    /// Called by OpenCV on the display thread when mouse events occur on the window.
+    /// Called by OpenCV on the shared display thread when mouse events occur on this window.
     /// Publishes to RuntimeEventBus so MouseEventNode / MouseRoiNode can receive them.
     /// </summary>
     private void OnOpenCvMouseCallback(MouseEventTypes eventType, int x, int y, MouseEventFlags flags, IntPtr userdata)
@@ -163,7 +57,6 @@ public class ImageShowNode : BaseNode
         var mapped = MapMouseEventType(eventType);
         if (mapped == null) return;
 
-        // Publish to RuntimeEventBus → MouseEventNode, MouseRoiNode
         RuntimeEventBus.RaiseMouseEvent(new MouseEventData
         {
             EventType = mapped.Value,
@@ -202,15 +95,10 @@ public class ImageShowNode : BaseNode
 
     public override void Cleanup()
     {
-        _threadRunning = false;
-        _displayThread?.Join(1000);
-        _displayThread = null;
-        _mouseCallbackDelegate = null;
-
-        lock (_imageLock)
+        // Remove this window from the shared display manager
+        if (!string.IsNullOrWhiteSpace(_activeWindowName))
         {
-            _pendingImage?.Dispose();
-            _pendingImage = null;
+            ImageShowManager.RemoveWindow(_activeWindowName);
         }
 
         base.Cleanup();

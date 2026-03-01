@@ -29,4 +29,11 @@
     </None>
   </ItemGroup>
 
+  <!-- API config: copy to output Models/API/ -->
+  <ItemGroup>
+    <None Include="..\..\Models\API\api_config.json" Link="Models\API\api_config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
