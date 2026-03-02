@@ -17,6 +17,8 @@
 
 ## 스크린샷
 
+<img width="1380" height="792" alt="image" src="https://github.com/user-attachments/assets/4241d261-60c0-4bb1-ab52-a6f973060417" />
+
 | 구성요소 | 설명 |
 |---------|------|
 | 좌측 패널 | 노드 팔레트 (카테고리별 노드 검색/선택) |
