@@ -112,6 +112,7 @@ MVXTester/
 ## 도움말 시스템
 
 Help 창 (`F1`)에는 7개 탭이 포함됩니다:
+<img width="979" height="757" alt="image" src="https://github.com/user-attachments/assets/8073a30e-2598-4f89-a2c8-9ab85c721690" />
 
 | 탭 | 내용 |
 |----|------|
