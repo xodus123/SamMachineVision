@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenCvSharp4" Version="4.11.*" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MVXTester.Core\MVXTester.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Chat config + prompts: copy to output Models/Chat/ -->
+  <ItemGroup>
+    <None Include="Data\chat_config.json" Link="Models\Chat\chat_config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Data\prompts.json" Link="Models\Chat\prompts.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Pre-built RAG index with bge-m3 embeddings -->
+  <ItemGroup>
+    <None Include="Data\rag_index.json" Link="Models\Chat\rag_index.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Node alias mapping for direct lookup -->
+  <ItemGroup>
+    <None Include="Data\node_aliases.json" Link="Models\Chat\node_aliases.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Chat RAG data: copy to output Models/Chat/data/ -->
+  <ItemGroup>
+    <None Include="Data\data\*.md" Link="Models\Chat\data\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

@@ -32,6 +32,7 @@ public abstract class BaseNode : INode
     public bool IsDirty { get; set; } = true;
     public bool IsRuntimeMode { get; set; }
     public string? Error { get; set; }
+    public NodeExecutionState ExecutionState { get; set; } = NodeExecutionState.Idle;
     public Mat? PreviewMat { get; protected set; }
     public string? PreviewText { get; protected set; }
     public readonly object PreviewLock = new();

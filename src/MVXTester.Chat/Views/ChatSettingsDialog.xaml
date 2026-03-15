@@ -1,0 +1,71 @@
+<Window x:Class="MVXTester.Chat.Views.ChatSettingsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="AI Chat Settings" Width="420" Height="520"
+        SizeToContent="Height" MinHeight="300" MaxHeight="600"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource BackgroundBrush}">
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- ═══ Basic Settings ═══ -->
+
+                <!-- Provider selection -->
+                <TextBlock Text="Provider" FontWeight="Bold" FontSize="13"
+                           Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,0,4" />
+                <ComboBox x:Name="ProviderCombo" SelectedIndex="0"
+                          SelectionChanged="OnProviderChanged" Margin="0,0,0,12">
+                    <ComboBoxItem Content="Ollama (Local)" Tag="ollama" />
+                    <ComboBoxItem Content="OpenAI" Tag="openai" />
+                    <ComboBoxItem Content="Claude (Anthropic)" Tag="claude" />
+                    <ComboBoxItem Content="Gemini (Google)" Tag="gemini" />
+                </ComboBox>
+
+                <!-- Ollama: fixed model info (read-only) -->
+                <StackPanel x:Name="OllamaModelPanel" Margin="0,0,0,12">
+                    <TextBlock Text="Chat Model (고정)" FontWeight="Bold" FontSize="13"
+                               Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,0,4" />
+                    <TextBlock x:Name="OllamaModelInfoText" FontSize="11"
+                               Foreground="{DynamicResource ForegroundDimBrush}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <!-- Cloud: model selection (ComboBox) -->
+                <StackPanel x:Name="CloudModelPanel" Margin="0,0,0,12">
+                    <TextBlock Text="Chat Model" FontWeight="Bold" FontSize="13"
+                               Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,0,4" />
+                    <ComboBox x:Name="ModelCombo" SelectionChanged="OnModelChanged"
+                              Margin="0,0,0,4" />
+                    <TextBlock x:Name="ModelDescText" Text="" FontSize="10"
+                               Foreground="{DynamicResource ForegroundDimBrush}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <!-- API Key (only for cloud providers) -->
+                <StackPanel x:Name="ApiPanel" Visibility="Collapsed">
+                    <TextBlock Text="API Key" FontWeight="Bold" FontSize="13"
+                               Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,0,4" />
+                    <PasswordBox x:Name="ApiKeyBox" Margin="0,0,0,12" Padding="4" />
+                </StackPanel>
+
+                <!-- Advanced Settings 제거됨 — 임베딩 재구축은 개발자가 build_rag_index.py로 수행 -->
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- OK / Cancel buttons -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Cancel" Width="80" Padding="0,6"
+                    Click="OnCancelClick" Margin="0,0,8,0" />
+            <Button Content="OK" Width="80" Padding="0,6"
+                    Click="OnOkClick" IsDefault="True" />
+        </StackPanel>
+    </Grid>
+</Window>

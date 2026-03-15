@@ -20,6 +20,7 @@ public partial class NodeViewModel : ObservableObject
     [ObservableProperty] private string? _errorMessage;
     [ObservableProperty] private bool _isSelected;
     [ObservableProperty] private System.Windows.Size _desiredSize;
+    [ObservableProperty] private NodeExecutionState _executionState;
 
     public INode Model { get; }
 
@@ -69,6 +70,7 @@ public partial class NodeViewModel : ObservableObject
     public void UpdatePreview()
     {
         ErrorMessage = Model.Error;
+        ExecutionState = Model.ExecutionState;
 
         // Text-based preview (for Print node etc.)
         PreviewText = Model.PreviewText;

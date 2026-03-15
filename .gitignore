@@ -32,3 +32,6 @@ Thumbs.db
 ## Publish
 publish/
 nul
+
+## Secrets (API 키 포함 가능)
+**/chat_config.json

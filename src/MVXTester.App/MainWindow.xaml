@@ -69,6 +69,9 @@
                               VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                    <Button Content="HelperBot" Command="{Binding OpenChatCommand}"
+                            Margin="2" ToolTip="Open HelperBot"
+                            FontSize="12" Padding="8,2" />
                     <Button Content="?" Command="{Binding ShowHelpCommand}"
                             Margin="2" ToolTip="Help (F1)"
                             FontSize="14" FontWeight="Bold" Padding="8,2" />
@@ -169,13 +172,7 @@
                             <Border />
                         </DockPanel>
 
-                        <TabControl Grid.Row="1" Padding="0" Margin="0,-2,0,0"
-                                    SelectedIndex="{Binding SelectedRightTab}">
-
-                            <TabItem Header="Properties">
-                                <views:PropertyEditorView DataContext="{Binding PropertyEditor}" />
-                            </TabItem>
-                        </TabControl>
+                        <views:PropertyEditorView Grid.Row="1" DataContext="{Binding PropertyEditor}" />
                     </Grid>
                 </Border>
             </Grid>

@@ -733,6 +733,27 @@ public partial class EditorViewModel : ObservableObject
     /// One-shot execution: executes all dirty nodes once and returns immediately.
     /// Used by ConnectionChanged, property changes, AutoExecute, etc.
     /// </summary>
+    private void NotifyNodeStateChanged(INode node)
+    {
+        var app = Application.Current;
+        app?.Dispatcher.BeginInvoke(() =>
+        {
+            var vm = Nodes.FirstOrDefault(n => n.Model == node);
+            if (vm != null)
+                vm.ExecutionState = node.ExecutionState;
+        });
+    }
+
+    private void ResetExecutionStatesAfterDelay(int delayMs = 2000)
+    {
+        _ = Task.Delay(delayMs).ContinueWith(_ =>
+            Application.Current?.Dispatcher.BeginInvoke(() =>
+            {
+                foreach (var n in Nodes)
+                    n.ExecutionState = NodeExecutionState.Idle;
+            }));
+    }
+
     [RelayCommand]
     public async Task Execute()
     {
@@ -745,10 +766,12 @@ public partial class EditorViewModel : ObservableObject
 
         try
         {
-            await Task.Run(() => _executor.Execute(_graph, cancellationToken: _executionCts.Token));
+            await Task.Run(() => _executor.Execute(_graph, cancellationToken: _executionCts.Token,
+                onNodeStateChanged: NotifyNodeStateChanged));
             foreach (var nodeVm in Nodes)
                 nodeVm.UpdatePreview();
             GraphExecuted?.Invoke();
+            ResetExecutionStatesAfterDelay();
         }
         catch (OperationCanceledException) { }
         finally
@@ -794,7 +817,8 @@ public partial class EditorViewModel : ObservableObject
                             Interlocked.Exchange(ref _uiUpdatePending, 0);
                         });
                     }
-                }
+                },
+                onNodeStateChanged: NotifyNodeStateChanged
             ));
         }
         catch (OperationCanceledException) { }
@@ -809,6 +833,8 @@ public partial class EditorViewModel : ObservableObject
 
             IsExecuting = false;
             _executionDoneTcs?.TrySetResult();
+            foreach (var n in Nodes)
+                n.ExecutionState = NodeExecutionState.Idle;
             foreach (var nodeVm in Nodes)
                 nodeVm.UpdatePreview();
             GraphExecuted?.Invoke();
@@ -826,10 +852,12 @@ public partial class EditorViewModel : ObservableObject
 
         try
         {
-            await Task.Run(() => _executor.Execute(_graph, forceAll: true, cancellationToken: _executionCts.Token));
+            await Task.Run(() => _executor.Execute(_graph, forceAll: true, cancellationToken: _executionCts.Token,
+                onNodeStateChanged: NotifyNodeStateChanged));
             foreach (var nodeVm in Nodes)
                 nodeVm.UpdatePreview();
             GraphExecuted?.Invoke();
+            ResetExecutionStatesAfterDelay();
         }
         catch (OperationCanceledException)
         {
@@ -880,7 +908,8 @@ public partial class EditorViewModel : ObservableObject
                         });
                     }
                 },
-                targetFps: 30
+                targetFps: 30,
+                onNodeStateChanged: NotifyNodeStateChanged
             ));
         }
         catch (OperationCanceledException) { }
@@ -896,6 +925,8 @@ public partial class EditorViewModel : ObservableObject
             IsExecuting = false;
             IsStreaming = false;
             _executionDoneTcs?.TrySetResult();
+            foreach (var n in Nodes)
+                n.ExecutionState = NodeExecutionState.Idle;
             foreach (var nodeVm in Nodes)
                 nodeVm.UpdatePreview();
             GraphExecuted?.Invoke();

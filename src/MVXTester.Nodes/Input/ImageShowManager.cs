@@ -151,6 +151,27 @@ public static class ImageShowManager
 
                     if (imageToShow != null)
                     {
+                        if (!entry.WindowCreated)
+                        {
+                            // Create resizable window (Normal flag enables auto-scaling)
+                            Cv2.NamedWindow(windowName, WindowFlags.Normal);
+
+                            // Set initial window size to fit screen (max 800x600)
+                            const int maxW = 800;
+                            const int maxH = 600;
+                            var imgW = imageToShow.Width;
+                            var imgH = imageToShow.Height;
+                            if (imgW > maxW || imgH > maxH)
+                            {
+                                var scale = Math.Min((double)maxW / imgW, (double)maxH / imgH);
+                                Cv2.ResizeWindow(windowName, (int)(imgW * scale), (int)(imgH * scale));
+                            }
+                            else
+                            {
+                                Cv2.ResizeWindow(windowName, imgW, imgH);
+                            }
+                        }
+
                         Cv2.ImShow(windowName, imageToShow);
                         entry.WindowCreated = true;
 

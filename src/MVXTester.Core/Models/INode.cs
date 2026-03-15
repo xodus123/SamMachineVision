@@ -28,6 +28,14 @@ public interface IConnection
     IInputPort Target { get; }
 }
 
+public enum NodeExecutionState
+{
+    Idle,
+    Executing,
+    Success,
+    Error
+}
+
 public interface INode
 {
     string Id { get; }
@@ -40,6 +48,7 @@ public interface INode
     bool IsDirty { get; set; }
     bool IsRuntimeMode { get; set; }
     string? Error { get; set; }
+    NodeExecutionState ExecutionState { get; set; }
     Mat? PreviewMat { get; }
     string? PreviewText { get; }
     Mat? ClonePreview();

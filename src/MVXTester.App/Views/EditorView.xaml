@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:nodify="https://miroiu.github.io/nodify"
              xmlns:vm="clr-namespace:MVXTester.App.ViewModels"
-             xmlns:conv="clr-namespace:MVXTester.App.Converters">
+             xmlns:conv="clr-namespace:MVXTester.App.Converters"
+             xmlns:models="clr-namespace:MVXTester.Core.Models;assembly=MVXTester.Core">
 
     <UserControl.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
@@ -61,9 +62,27 @@
                                  ContentBrush="{DynamicResource SurfaceBrush}"
                                  FooterBrush="{DynamicResource SurfaceBrush}"
                                  Foreground="{DynamicResource ForegroundBrush}"
-                                 Background="{DynamicResource SurfaceBrush}"
-                                 BorderBrush="{Binding CategoryBorderColor}"
-                                 BorderThickness="1.5">
+                                 Background="{DynamicResource SurfaceBrush}">
+                        <nodify:Node.Style>
+                            <Style TargetType="nodify:Node" BasedOn="{StaticResource {x:Type nodify:Node}}">
+                                <Setter Property="BorderBrush" Value="{Binding CategoryBorderColor}" />
+                                <Setter Property="BorderThickness" Value="1.5" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ExecutionState}" Value="{x:Static models:NodeExecutionState.Executing}">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource WarningBrush}" />
+                                        <Setter Property="BorderThickness" Value="2.5" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding ExecutionState}" Value="{x:Static models:NodeExecutionState.Success}">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource SuccessBrush}" />
+                                        <Setter Property="BorderThickness" Value="2" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding ExecutionState}" Value="{x:Static models:NodeExecutionState.Error}">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}" />
+                                        <Setter Property="BorderThickness" Value="2.5" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </nodify:Node.Style>
                         <nodify:Node.Footer>
                             <StackPanel>
                                 <Image Source="{Binding PreviewImage}"

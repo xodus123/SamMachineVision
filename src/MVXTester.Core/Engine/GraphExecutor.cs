@@ -6,27 +6,29 @@ public class GraphExecutor
 {
     public TimeSpan LastExecutionTime { get; private set; }
 
-    public void Execute(NodeGraph graph, bool forceAll = false, CancellationToken cancellationToken = default)
+    public void Execute(NodeGraph graph, bool forceAll = false, CancellationToken cancellationToken = default,
+        Action<INode>? onNodeStateChanged = null)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
 
         var (nodes, conns) = graph.Snapshot();
         var order = TopologicalSort(nodes, conns);
-        ExecuteNodes(order, forceAll, cancellationToken);
+        ExecuteNodes(order, forceAll, cancellationToken, onNodeStateChanged);
 
         sw.Stop();
         LastExecutionTime = sw.Elapsed;
     }
 
     public void ExecuteContinuous(NodeGraph graph, CancellationToken cancellationToken,
-        Action? onFrameComplete = null, int targetFps = 30)
+        Action? onFrameComplete = null, int targetFps = 30,
+        Action<INode>? onNodeStateChanged = null)
     {
         var delay = TimeSpan.FromMilliseconds(1000.0 / targetFps);
-        ExecuteContinuousCore(graph, cancellationToken, onFrameComplete, delay);
+        ExecuteContinuousCore(graph, cancellationToken, onFrameComplete, delay, onNodeStateChanged);
     }
 
     private void ExecuteContinuousCore(NodeGraph graph, CancellationToken cancellationToken,
-        Action? onFrameComplete, TimeSpan delay)
+        Action? onFrameComplete, TimeSpan delay, Action<INode>? onNodeStateChanged = null)
     {
         // Phase 0: Start background nodes
         var (nodes, conns) = graph.Snapshot();
@@ -40,7 +42,7 @@ public class GraphExecutor
         {
         // Initial force execution
         var order = TopologicalSort(nodes, conns);
-        ExecuteNodes(order, true, cancellationToken);
+        ExecuteNodes(order, true, cancellationToken, onNodeStateChanged);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
         LastExecutionTime = sw.Elapsed;
@@ -67,7 +69,7 @@ public class GraphExecutor
                 }
             }
 
-            ExecuteNodes(order, false, cancellationToken);
+            ExecuteNodes(order, false, cancellationToken, onNodeStateChanged);
 
             sw.Stop();
             LastExecutionTime = sw.Elapsed;
@@ -92,13 +94,14 @@ public class GraphExecutor
     }
 
     public void ExecuteRuntime(NodeGraph graph, CancellationToken cancellationToken,
-        Action? onFrameComplete = null, int pollIntervalMs = 16)
+        Action? onFrameComplete = null, int pollIntervalMs = 16,
+        Action<INode>? onNodeStateChanged = null)
     {
         var nodesSnapshot = graph.Snapshot().Nodes;
         foreach (var n in nodesSnapshot) n.IsRuntimeMode = true;
         try
         {
-            ExecuteRuntimeCore(graph, cancellationToken, onFrameComplete, pollIntervalMs);
+            ExecuteRuntimeCore(graph, cancellationToken, onFrameComplete, pollIntervalMs, onNodeStateChanged);
         }
         finally
         {
@@ -108,7 +111,7 @@ public class GraphExecutor
     }
 
     private void ExecuteRuntimeCore(NodeGraph graph, CancellationToken cancellationToken,
-        Action? onFrameComplete, int pollIntervalMs)
+        Action? onFrameComplete, int pollIntervalMs, Action<INode>? onNodeStateChanged = null)
     {
         // Phase 0: Start background nodes
         var (nodes, conns) = graph.Snapshot();
@@ -124,7 +127,7 @@ public class GraphExecutor
         var order = TopologicalSort(nodes, conns);
         var sw = System.Diagnostics.Stopwatch.StartNew();
 
-        ExecuteNodes(order, true, cancellationToken);
+        ExecuteNodes(order, true, cancellationToken, onNodeStateChanged);
 
         sw.Stop();
         LastExecutionTime = sw.Elapsed;
@@ -166,7 +169,7 @@ public class GraphExecutor
             {
                 sw.Restart();
 
-                ExecuteNodes(order, false, cancellationToken);
+                ExecuteNodes(order, false, cancellationToken, onNodeStateChanged);
 
                 sw.Stop();
                 LastExecutionTime = sw.Elapsed;
@@ -197,17 +200,18 @@ public class GraphExecutor
     /// When an ILoopNode is encountered, its downstream body nodes are
     /// executed repeatedly instead of once.
     /// </summary>
-    private void ExecuteNodes(IReadOnlyList<INode> order, bool forceAll, CancellationToken ct)
+    private void ExecuteNodes(IReadOnlyList<INode> order, bool forceAll, CancellationToken ct,
+        Action<INode>? onNodeStateChanged = null)
     {
         var processedSet = new HashSet<INode>();
-        ExecuteNodeList(order, forceAll, processedSet, ct);
+        ExecuteNodeList(order, forceAll, processedSet, ct, onNodeStateChanged);
     }
 
     /// <summary>
     /// Execute a list of nodes, handling ILoopNode nodes specially.
     /// </summary>
     private void ExecuteNodeList(IReadOnlyList<INode> order, bool forceAll,
-        HashSet<INode> processedSet, CancellationToken ct)
+        HashSet<INode> processedSet, CancellationToken ct, Action<INode>? onNodeStateChanged = null)
     {
         for (int i = 0; i < order.Count; i++)
         {
@@ -217,20 +221,25 @@ public class GraphExecutor
 
             if (node is ILoopNode loopNode && (forceAll || node.IsDirty))
             {
-                ExecuteLoop(loopNode, order, processedSet, ct);
+                ExecuteLoop(loopNode, order, processedSet, ct, onNodeStateChanged);
             }
             else if (forceAll || node.IsDirty)
             {
+                node.ExecutionState = NodeExecutionState.Executing;
+                onNodeStateChanged?.Invoke(node);
                 try
                 {
                     node.Error = null;
                     node.Process();
                     node.IsDirty = false;
+                    node.ExecutionState = NodeExecutionState.Success;
                 }
                 catch (Exception ex)
                 {
                     node.Error = ex.Message;
+                    node.ExecutionState = NodeExecutionState.Error;
                 }
+                onNodeStateChanged?.Invoke(node);
             }
         }
     }
@@ -240,7 +249,7 @@ public class GraphExecutor
     /// Supports nested loops (body may contain other ILoopNode nodes).
     /// </summary>
     private void ExecuteLoop(ILoopNode loopNode, IReadOnlyList<INode> fullOrder,
-        HashSet<INode> outerProcessedSet, CancellationToken ct)
+        HashSet<INode> outerProcessedSet, CancellationToken ct, Action<INode>? onNodeStateChanged = null)
     {
         var loopAsNode = (INode)loopNode;
 
@@ -261,6 +270,8 @@ public class GraphExecutor
 
         // Initialize loop
         loopAsNode.Error = null;
+        loopAsNode.ExecutionState = NodeExecutionState.Executing;
+        onNodeStateChanged?.Invoke(loopAsNode);
         try
         {
             loopNode.InitializeLoop();
@@ -268,6 +279,8 @@ public class GraphExecutor
         catch (Exception ex)
         {
             loopAsNode.Error = ex.Message;
+            loopAsNode.ExecutionState = NodeExecutionState.Error;
+            onNodeStateChanged?.Invoke(loopAsNode);
             loopAsNode.IsDirty = false;
             outerProcessedSet.Add(loopAsNode);
             foreach (var bn in bodyNodes) outerProcessedSet.Add(bn);
@@ -298,7 +311,7 @@ public class GraphExecutor
 
             // Execute body nodes (supports nested loops via recursion)
             var bodyProcessed = new HashSet<INode>();
-            ExecuteNodeList(bodyNodes, true, bodyProcessed, ct);
+            ExecuteNodeList(bodyNodes, true, bodyProcessed, ct, onNodeStateChanged);
 
             // Collect iteration results
             foreach (var c in collectors) c.CollectIteration();
@@ -321,6 +334,11 @@ public class GraphExecutor
         }
 
         foreach (var c in collectors) c.FinalizeCollection();
+
+        loopAsNode.ExecutionState = loopAsNode.Error != null
+            ? NodeExecutionState.Error
+            : NodeExecutionState.Success;
+        onNodeStateChanged?.Invoke(loopAsNode);
 
         // Mark all body nodes as processed so they're skipped in the outer traversal
         loopAsNode.IsDirty = false;

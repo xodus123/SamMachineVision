@@ -11,6 +11,8 @@ using MVXTester.Core.Registry;
 using MVXTester.Core.Serialization;
 using MVXTester.App.Services;
 using MVXTester.App.Views;
+using MVXTester.Chat.ViewModels;
+using MVXTester.Chat.Views;
 
 namespace MVXTester.App.ViewModels;
 
@@ -19,6 +21,7 @@ public partial class MainViewModel : ObservableObject
     public EditorViewModel Editor { get; }
     public NodePaletteViewModel Palette { get; }
     public PropertyEditorViewModel PropertyEditor { get; }
+    public ChatbotViewModel Chatbot { get; }
     public NodeRegistry Registry { get; }
 
     [ObservableProperty] private string _statusText = "Ready";
@@ -86,6 +89,50 @@ public partial class MainViewModel : ObservableObject
         Palette = new NodePaletteViewModel(Registry, OnNodeSelectedFromPalette);
         PropertyEditor = new PropertyEditorViewModel();
         PropertyEditor.Initialize(Editor.UndoManager, Editor);
+        Chatbot = new ChatbotViewModel(Registry);
+        Chatbot.LoadExampleRequested += async exampleFileName =>
+        {
+            if (!await ConfirmAndStopExecution()) return;
+            if (!ConfirmDiscardChanges()) return;
+
+            var examplesDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "examples");
+            if (!Directory.Exists(examplesDir))
+            {
+                StatusText = $"예제 디렉토리 없음: {examplesDir}";
+                return;
+            }
+
+            var path = Path.Combine(examplesDir, exampleFileName + ".mvxp");
+            if (File.Exists(path))
+            {
+                LoadGraph(path);
+                StatusText = $"예제 로드됨: {exampleFileName}";
+
+                // Image Read 노드의 파일 경로가 비어있으면 안내
+                var emptyPathNodes = Editor.Nodes
+                    .Where(n => n.Model.Name == "Image Read")
+                    .Where(n => n.Model.Properties
+                        .Any(p => p.PropertyType == MVXTester.Core.Models.PropertyType.FilePath
+                            && string.IsNullOrWhiteSpace(p.GetValue<string>())))
+                    .ToList();
+
+                if (emptyPathNodes.Any())
+                {
+                    System.Windows.MessageBox.Show(
+                        "Image Read(이미지 읽기) 노드의 파일 경로가 비어있습니다.\n" +
+                        "노드를 더블클릭하여 이미지 파일 경로를 설정해 주세요.",
+                        "파일 경로 설정 필요",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Information);
+                }
+            }
+            else
+            {
+                StatusText = $"예제 파일 없음: {exampleFileName}.mvxp";
+            }
+        };
+
+        Chatbot.OpenHelpRequested += () => ShowHelp();
 
         Editor.NodeSelected += node =>
         {
@@ -542,6 +589,23 @@ public partial class MainViewModel : ObservableObject
     {
         ThemeManager.ToggleTheme();
         ThemeIcon = ThemeManager.IsDarkTheme ? "\u2600" : "\u263D";
+    }
+
+    private ChatWindow? _chatWindow;
+
+    [RelayCommand]
+    private void OpenChat()
+    {
+        if (_chatWindow == null)
+        {
+            _chatWindow = new ChatWindow
+            {
+                DataContext = Chatbot,
+                Owner = Application.Current.MainWindow
+            };
+        }
+        _chatWindow.Show();
+        _chatWindow.Activate();
     }
 
     [RelayCommand]

@@ -269,15 +269,38 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <!-- Result image -->
+                <!-- Result image (interactive) -->
                 <Border Margin="0,8,0,0"
                         Visibility="{Binding ResultImage, Converter={StaticResource NullToVis}}">
                     <StackPanel>
                         <TextBlock Text="Result" FontWeight="SemiBold" FontSize="11"
                                    Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,0,4" />
-                        <Image Source="{Binding ResultImage}" Stretch="Uniform" MaxHeight="240" />
+                        <Border Background="{DynamicResource BackgroundBrush}" ClipToBounds="True">
+                            <Grid x:Name="ResultImageContainer"
+                                  MouseMove="ResultImage_MouseMove"
+                                  MouseLeftButtonDown="ResultImage_MouseLeftButtonDown"
+                                  MouseLeftButtonUp="ResultImage_MouseLeftButtonUp"
+                                  MouseLeave="ResultImage_MouseLeave"
+                                  Cursor="Cross"
+                                  Background="Transparent">
+                                <Image x:Name="ResultImageElement"
+                                       Source="{Binding ResultImage}" Stretch="Uniform" MaxHeight="240" />
+                                <!-- ROI overlay -->
+                                <Canvas IsHitTestVisible="False">
+                                    <Rectangle Canvas.Left="{Binding RoiLeft}" Canvas.Top="{Binding RoiTop}"
+                                               Width="{Binding RoiWidth}" Height="{Binding RoiHeight}"
+                                               Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5"
+                                               StrokeDashArray="4 2"
+                                               Fill="#2089B4FA"
+                                               Visibility="{Binding IsRoiVisible, Converter={StaticResource BoolToVis}}" />
+                                </Canvas>
+                            </Grid>
+                        </Border>
                         <TextBlock Text="{Binding ResultImageInfo}" FontSize="9"
                                    Foreground="{DynamicResource ForegroundDimBrush}" Margin="0,2,0,0"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding CursorInfo}" FontSize="9"
+                                   Foreground="{DynamicResource AccentBrush}" Margin="0,1,0,0"
                                    HorizontalAlignment="Center" />
                     </StackPanel>
                 </Border>

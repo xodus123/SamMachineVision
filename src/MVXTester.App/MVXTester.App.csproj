@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MVXTester.Core\MVXTester.Core.csproj" />
+    <ProjectReference Include="..\MVXTester.Chat\MVXTester.Chat.csproj" />
     <ProjectReference Include="..\MVXTester.Nodes\MVXTester.Nodes.csproj" />
   </ItemGroup>
 
@@ -33,13 +34,6 @@
   <!-- API config: copy to output Models/API/ -->
   <ItemGroup>
     <None Include="..\..\Models\API\api_config.json" Link="Models\API\api_config.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <!-- Textbook PDF: copy to output docs/ -->
-  <ItemGroup>
-    <None Include="..\..\docs\SamMachineVision (MVXTester) 학습 교재.pdf" Link="docs\MVXTester_Textbook.pdf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
